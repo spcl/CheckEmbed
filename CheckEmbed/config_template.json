@@ -1,0 +1,58 @@
+{
+    "chatgpt" : {
+        "model_id": "gpt-3.5-turbo-0125",
+        "prompt_token_cost": 0.0005,
+        "response_token_cost": 0.0015,
+        "temperature": 1.0,
+        "max_tokens": 4096,
+        "stop": null,
+        "organization": "",
+        "api_key": ""
+    },
+    "chatgpt4" : {
+        "model_id": "gpt-4",
+        "prompt_token_cost": 0.03,
+        "response_token_cost": 0.06,
+        "temperature": 1.0,
+        "max_tokens": 4096,
+        "stop": null,
+        "organization": "",
+        "api_key": ""
+    },
+    "chatgpt4-turbo" : {
+        "model_id": "gpt-4-turbo",
+        "prompt_token_cost": 0.01,
+        "response_token_cost": 0.03,
+        "temperature": 1.0,
+        "max_tokens": 4096,
+        "stop": null,
+        "organization": "",
+        "api_key": ""
+    },
+    "chatgpt4-o": {
+        "model_id": "gpt-4o",
+        "prompt_token_cost": 0.005,
+        "response_token_cost": 0.015,
+        "temperature": 1.0,
+        "max_tokens": 4096,
+        "stop": null,
+        "organization": "",
+        "api_key": ""
+    },
+    "gpt-embedding-large" :{
+        "model_id": "text-embedding-3-large",
+        "token_cost": 0.00013,
+        "encoding": "float",
+        "dimension": 3072,
+        "organization": "",
+        "api_key": ""
+    },
+    "gpt-embedding-small" :{
+        "model_id": "text-embedding-3-small",
+        "token_cost": 0.00002,
+        "encoding": "float",
+        "dimension": 1536,
+        "organization": "",
+        "api_key": ""
+    }
+}

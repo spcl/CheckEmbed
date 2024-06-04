@@ -1,0 +1,9 @@
+### INSTRUCTION ###
+
+Hello. Please generate a passage of text that talks about (### TOPIC ###).
+
+Please, use the following format for answering:
+<formatting>
+### PASSAGE ###
+The passage here....
+</formatting>

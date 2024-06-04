@@ -1,0 +1,14 @@
+### INSTRUCTION ###
+
+Hello. Please generate ### NUMBER ### completely false information (fact hallucinations) on (### TOPIC ###).
+Then insert the errors inside a passage of text that talks about (### TOPIC ###). 
+You should convince a reader that the false informations are actually correct ones.
+
+Please, use the following format for answering:
+
+<formatting>
+### ERRORS ###
+List of fact hallucinations to be later included in the passage...
+### PASSAGE ###
+The passage here....
+</formatting>

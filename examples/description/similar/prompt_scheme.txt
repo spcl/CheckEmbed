@@ -1,0 +1,12 @@
+### INSTRUCTION ###
+
+Hello. Please generate two passages of text. They should both describe the same thing (### HERE ###). However, these two passages should differ VASTLY in their length, style.
+I want you to give an answer using the following format:
+<formatting>
+### DESCRIPTION 1 ###
+the actual description here...
+### DESCRIPTION 2 ###
+the actual description here...
+</formatting>
+
+### ANSWER ###

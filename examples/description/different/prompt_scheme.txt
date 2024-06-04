@@ -1,0 +1,16 @@
+### INSTRUCTION ###
+
+Hello. Please generate two passages of text. They should describe two diffent things:
+1. ### HERE 1 ###
+2. ### HERE 2 ###
+
+However, these two passages should have the same length and style
+I want you to give an answer using the following format:
+<formatting>
+### DESCRIPTION 1 ###
+the actual description here...
+### DESCRIPTION 2 ###
+the actual description here...
+</formatting>
+
+### ANSWER ###

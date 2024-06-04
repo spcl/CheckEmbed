@@ -1,0 +1,35 @@
+### INSTRUCTION ###
+
+You are a lawyer.
+
+### QUESTION ###
+
+Based on the provided context extract all the legal definitions. Answer using the following formatting.
+<formatting>
+Term.Definition
+Term.Definition
+...
+</formatting>
+<example>
+[...]
+### CONTEXT ###
+
+Preliminary Note
+The Stock Purchase Agreement sets forth the basic terms of the purchase and sale of the preferred stock to the investors (such as the purchase price, closing date, conditions to closing) and identifies the other financing documents. Generally this agreement does not set forth either (1) the characteristics of the stock being sold (which are defined in the Certificate of Incorporation) or (2) the relationship among the parties after the closing, such as registration rights, rights of first refusal and co-sale and voting arrangements (these matters often implicate persons other than just the Company and the investors in this round of financing and are usually embodied in separate agreements to which those others persons are parties, or in some cases in the Certificate of Incorporation). The main items of negotiation in the Stock Purchase Agreement are therefore the price and number of shares being sold, the representations and warranties that the Company must make to the investors and the closing conditions for the transaction.
+SERIES A PREFERRED STOCK PURCHASE AGREEMENT
+THIS SERIES A PREFERRED STOCK PURCHASE AGREEMENT (this “Agreement”), is made as of [], 20[], by and among [______], a Delaware corporation (the “Company”), and the investors listed on Exhibit A attached to this Agreement (each a “Purchaser” and together the “Purchasers”).
+The parties hereby agree as follows:
+
+### ANSWER ###
+
+Agreement. THIS SERIES A PREFERRED STOCK PURCHASE AGREEMENT
+Company. Delaware corporation
+Purchaser. Company or the investors listed on Exhibit A
+Purchasers. Company and the investors listed on Exhibit A together
+</example>
+
+### CONTEXT ###
+
+[###REPLACE WITH CONTEXT###]
+
+### ANSWER ###
