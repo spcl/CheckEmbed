@@ -4,7 +4,7 @@
   <img src="paper/pics/checkembed_overview.svg" width="80%">
 </p>
 
-This is the official implementation of [CheckEmbed: Effective Verification of LLM Solutions to Open-Ended Tasks](https://arxiv.org/pdf/2405..pdf).
+This is the official implementation of [CheckEmbed: Effective Verification of LLM Solutions to Open-Ended Tasks](https://arxiv.org/abs/2406.02524).
 
 This framework gives you the ability to verify LLM answers, especially for
 intricate open-ended tasks such as consolidation, summarization, and extraction
@@ -86,6 +86,6 @@ Using this in your work? Please reference us using the provided citation:
   year = 2024,
   month = May,
   eprinttype = {arXiv},
-  eprint = {2405.}
+  eprint = {2406.02524}
 }
 ```
