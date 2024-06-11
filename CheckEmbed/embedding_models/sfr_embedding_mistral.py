@@ -54,8 +54,6 @@ class SFREmbeddingMistral(AbstractEmbeddingModel):
 
         :param device: The device to load the model on.
         :type device: str
-        :param batch_size: The batch size to be used for the model.
-        :type batch_size: int
         """
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
