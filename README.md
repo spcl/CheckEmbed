@@ -84,7 +84,7 @@ Using this in your work? Please reference us using the provided citation:
   title = {{CheckEmbed: Effective Verification of LLM Solutions to Open-Ended Tasks}},
   author = {Besta, Maciej and Paleari, Lorenzo and Kubicek, Ales and Nyczyk, Piotr and Gerstenberger, Robert and Iff, Patrick and Lehmann, Tomasz and Niewiadomski, Hubert and Hoefler, Torsten},
   year = 2024,
-  month = May,
+  month = Jun,
   eprinttype = {arXiv},
   eprint = {2406.02524}
 }

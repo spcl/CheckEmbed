@@ -96,9 +96,9 @@ class ChatGPT(AbstractLanguageModel):
         :return: Response(s) from the OpenAI model.
         :rtype: List[ChatCompletion]
         """
-        if self.cache and query in self.respone_cache:
+        if self.cache and query in self.response_cache:
             self.logger.debug(f"Used cache for query: {query}")
-            return self.respone_cache[query]
+            return self.response_cache[query]
         
         response = []
         for _ in tqdm(range(num_query), desc="Samples", leave=False):
@@ -106,7 +106,7 @@ class ChatGPT(AbstractLanguageModel):
             response.append(res)
 
         if self.cache:
-            self.respone_cache[query] = response
+            self.response_cache[query] = response
         return response
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)

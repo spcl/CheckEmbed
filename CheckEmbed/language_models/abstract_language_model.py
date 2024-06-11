@@ -41,7 +41,7 @@ class AbstractLanguageModel(ABC):
         self.model_name: str = model_name
         self.cache = cache
         if self.cache:
-            self.respone_cache: Dict[str, List[Any]] = {}
+            self.response_cache: Dict[str, List[Any]] = {}
         if config_path != None:
             self.load_config(config_path)
         self.prompt_tokens: int = 0
@@ -65,7 +65,7 @@ class AbstractLanguageModel(ABC):
         """
         Clear the response cache.
         """
-        self.respone_cache.clear()
+        self.response_cache.clear()
 
     # written by Lorenzo Paleari
     @abstractmethod
