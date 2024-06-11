@@ -35,7 +35,7 @@ class AbstractEmbeddingModel(ABC):
         self.model_name: str = model_name
         self.cache = cache
         if self.cache:
-            self.respone_cache: Dict[str, List[Any]] = {}
+            self.response_cache: Dict[str, List[Any]] = {}
         if config_path != None:
             self.load_config(config_path)
         self.prompt_tokens: int = 0
@@ -57,7 +57,7 @@ class AbstractEmbeddingModel(ABC):
         """
         Clear the response cache.
         """
-        self.respone_cache.clear()
+        self.response_cache.clear()
 
     @abstractmethod
     def load_model(self, device: str = None) -> None:
