@@ -453,6 +453,7 @@ class Scheduler:
             
             print("Remaining budget: ", self.budget)
 
+        return
         # EMBEDDINGS GENERATION
         if startingPoint.value <= StartingPoint.EMBEDDINGS.value:
             print("\n\nEmbeddings generation started...")
