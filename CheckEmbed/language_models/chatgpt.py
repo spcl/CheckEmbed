@@ -39,7 +39,7 @@ class ChatGPT(AbstractLanguageModel):
 
         :param config_path: Path to the configuration file. Defaults to "".
         :type config_path: str
-        :param model_name: Name of the model, default is 'chatgpt'. Used to select the correct configuration.
+        :param model_name: Name of the model, default is 'chatgpt4'. Used to select the correct configuration.
         :type model_name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
