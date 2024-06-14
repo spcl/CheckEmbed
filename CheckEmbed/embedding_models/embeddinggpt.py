@@ -83,7 +83,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         :return: The embeddings of the text.
         :rtype: List[List[float]]
         """
-        async def async_query():
+        async def async_query(input: Union[List[str], str]):
             if isinstance(input, str):
                 input = [input]
             
@@ -92,16 +92,16 @@ class EmbeddingGPT(AbstractEmbeddingModel):
                     return await task
                 
             semaphore = asyncio.Semaphore(self.max_concurrent_requests)
-            tasks = [sem_task(semaphore, self.embed_query(i).data[0].embedding) for i in input]
+            tasks = [sem_task(semaphore, self.embed_query(i)) for i in input]
 
             responses = []
             for task in tqdm(asyncio.as_completed(tasks), total=len(input), desc="Embeddings", leave=False):
                 response = await task
-                responses.append(response)
+                responses.append(response.data[0].embedding)
 
             return responses
         
-        return asyncio.run(async_query())
+        return asyncio.run(async_query(input))
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)
     async def embed_query(self, input: str) -> CreateEmbeddingResponse:
