@@ -98,7 +98,7 @@ class E5Mistral7b(AbstractEmbeddingModel):
             embeddings = F.normalize(embeddings, p=2, dim=1)
             total_embeddings.extend(embeddings.cpu().detach().numpy().tolist())
 
-            del embeddings
+            del embeddings, outputs, batch_dict
             gc.collect()
             torch.cuda.empty_cache()
         return total_embeddings
