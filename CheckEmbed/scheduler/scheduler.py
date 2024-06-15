@@ -9,6 +9,7 @@
 import os
 import json
 import logging
+import spacy
 
 from enum import Enum
 from typing import List
@@ -23,8 +24,6 @@ from CheckEmbed.operations import SelfCheckGPTOperation
 from CheckEmbed.operations import Operation
 from CheckEmbed.parser import Parser
 from CheckEmbed.embedder import Embedder
-
-from enum import Enum
 
 class StartingPoint(Enum):
     """
@@ -396,6 +395,14 @@ class Scheduler:
         :type device: str
         """
 
+        # Check if the spacy model is available and download it if necessary
+        if selfCheckGPT or spacy_separator:
+            try:
+                spacy.load("en_core_web_sm")
+            except Exception as e:
+                print("Downloading spacy model...")
+                spacy.cli.download("en_core_web_sm")
+
         # Create the directory structure if necessary
         if defaultDirectories:
             if not os.path.exists(os.path.join(self.workdir, "embeddings")):
@@ -453,7 +460,6 @@ class Scheduler:
             
             print("Remaining budget: ", self.budget)
 
-        return
         # EMBEDDINGS GENERATION
         if startingPoint.value <= StartingPoint.EMBEDDINGS.value:
             print("\n\nEmbeddings generation started...")

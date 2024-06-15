@@ -15,7 +15,7 @@ authors = [
 description = "Python package for 'CheckEmbed'"
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.8"
+requires-python = ">=3.8.12"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
