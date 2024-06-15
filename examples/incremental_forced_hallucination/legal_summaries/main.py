@@ -191,7 +191,7 @@ def start(current_dir: str, ground_truth_gen: bool = False, error_number: int = 
         config_path=config_path,
         model_name= "Alibaba-NLP/gte-Qwen1.5-7B-instruct",
         cache = False,
-        access_token = "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", # Add your access token here
+        access_token = "", # Add your access token here
         batch_size=1,
     )
 
