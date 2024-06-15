@@ -171,7 +171,7 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
     """
     config_path = os.path.join(
         current_dir,
-        "../../../CheckEmbed/config.json",
+        "../../../../CheckEmbed/config.json",
     )
 
     # Initialize the parser and the embedder
