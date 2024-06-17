@@ -38,7 +38,7 @@ class CustomParser(Parser):
         :type prompt_scheme_path: str
         :param error_number: Number of errors that the LLM is asked in the prompts to generate.
         :type error_number: int
-        :param final_responses_path: The path for the hallucionations.json file.
+        :param final_responses_path: The path to the hallucinations.json file.
         :type final_responses_path: str
         """
         super().__init__(dataset_path)
@@ -95,7 +95,7 @@ class CustomParser(Parser):
         :type responses: List[List[str]]
         :param custom_inputs: The custom inputs to the parser. Defaults to None.
         :type custom_inputs: Any
-        :return: The parsed responses. Output is going to be saved on a .json file using the following structure:
+        :return: The parsed responses. The output is going to be saved in a .json file using the following structure:
         {
             "data": [
                 {

@@ -121,6 +121,8 @@ def start(current_dir: str, num_chunks: int = 1, start: int = StartingPoint.PROM
     :type num_chunks: int
     :param start: The starting point. Defaults to StartingPoint.PROMPT.
     :type start: StartingPoint
+    :param bool_magic: TODO. Defaults to False.
+    :type bool_magic: bool
     """
 
     # Config file for the LLM(s)
