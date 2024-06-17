@@ -86,23 +86,47 @@ class GteQwenInstruct(AbstractEmbeddingModel):
             input = [input]
 
         total_embeddings = []
-        batched_responses = [input[i:i+self.batch_size] for i in range(0, len(input), self.batch_size)]
+        flag = True
 
-        for batch in tqdm(batched_responses, desc="Batches to Embed", leave=False, total=len(batched_responses)):
-            batch_dict = self.tokenizer(batch, max_length=self.max_length, padding=True, truncation=True, return_tensors='pt')
-            batch_dict.to(self.model.device)
+        while flag:
+            try:
+                batched_responses = [input[i:i+self.batch_size] for i in range(0, len(input), self.batch_size)]
 
-            with torch.no_grad():
-                outputs = self.model(**batch_dict)
-            embeddings = self.last_token_pool(outputs.last_hidden_state, batch_dict['attention_mask'])
+                embeddings = None
+                outputs = None
+                batch_dict = None
 
-            # normalize embeddings
-            embeddings = F.normalize(embeddings, p=2, dim=1)
-            total_embeddings.extend(embeddings.cpu().detach().numpy().tolist())
+                for batch in tqdm(batched_responses, desc="Batches to Embed", leave=False, total=len(batched_responses)):
+                    batch_dict = self.tokenizer(batch, max_length=self.max_length, padding=True, truncation=True, return_tensors='pt')
+                    batch_dict.to(self.model.device)
 
-            del embeddings, outputs, batch_dict
-            gc.collect()
-            torch.cuda.empty_cache()
+                    with torch.no_grad():
+                        outputs = self.model(**batch_dict)
+                    embeddings = self.last_token_pool(outputs.last_hidden_state, batch_dict['attention_mask'])
+
+                    # normalize embeddings
+                    embeddings = F.normalize(embeddings, p=2, dim=1)
+                    total_embeddings.extend(embeddings.cpu().detach().numpy().tolist())
+
+                    del embeddings, outputs, batch_dict
+                    gc.collect()
+                    torch.cuda.empty_cache()
+                
+                flag = False
+
+            except Exception as e:
+                embeddings = None
+                outputs = None
+                batch_dict = None
+                total_embeddings = []
+                gc.collect()
+                torch.cuda.empty_cache()
+                
+                print("Error occurred, reducing batch size and retrying")
+                if self.batch_size == 1:
+                    raise e
+                self.batch_size = self.batch_size // 2  # reduce batch size by half
+            
         return total_embeddings
 
     def last_token_pool(self, last_hidden_states: Tensor,
