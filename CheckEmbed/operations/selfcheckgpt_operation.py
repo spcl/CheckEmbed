@@ -20,6 +20,7 @@ import bert_score
 
 from tqdm import tqdm
 from typing import List, Any
+from timeit import default_timer as timer
 
 from CheckEmbed.operations import Operation
 from CheckEmbed.utility import capture_specific_stderr
@@ -149,6 +150,7 @@ class SelfCheckGPTOperation(Operation):
         """
 
         print("Running SelfCheckGPT operation.")
+        time_performance = custom_inputs["time_performance"]
         
         # Initialize logging
         logging.basicConfig(
@@ -162,12 +164,19 @@ class SelfCheckGPTOperation(Operation):
         selfcheck_bertscore = SelfCheckBERTScore(device=custom_inputs["device"], batch_size=custom_inputs["batch_size"], rescale_with_baseline=True)
         logging.info("SelfCheckGPT with BertScore initialized.")
 
+        if time_performance:
+            with open(os.path.join(self.sample_dir_path, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\nSelfCheckGPT operation\n")
+
         # For every language model response file run SelfCheckGPT with BertScore
+        performance_times = []
         for lm_name in (pbar := tqdm(custom_inputs["lm_names"], desc="Language Models", leave=True)):
             pbar.set_postfix_str(f"{lm_name}")
             logging.info(f"Loading responses from {lm_name}.")
             reference_texts = []
             samples = []
+
+            start = timer() if time_performance else None
 
             # Load samples from the language model
             with open(os.path.join(self.sample_dir_path, f"{lm_name}_samples.json")) as f:
@@ -211,6 +220,11 @@ class SelfCheckGPTOperation(Operation):
             std_devs = [np.std(result) if len(result) > 0 else 0.0 for result in results]
             
             logging.info(f"Finished running SelfCheckGPT with BertScore for {lm_name}.")
+            end = timer() if time_performance else None
+            if time_performance:
+                performance_times.append(end - start)
+                with open(os.path.join(self.sample_dir_path, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\t - Time for {lm_name}: {end - start}\n")
 
             # Store results
             with open(os.path.join(self.result_dir_path, f"{lm_name}_gptselfcheck.json"), "w") as f:
@@ -223,3 +237,7 @@ class SelfCheckGPTOperation(Operation):
                 json.dump({"data": results_json}, f, indent=4)
 
             logging.info(f"Saved results for {lm_name}.")
+
+        if time_performance:
+            with open(os.path.join(self.sample_dir_path, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\tTotal time: {sum(performance_times)}\n")

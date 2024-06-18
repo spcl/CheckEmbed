@@ -268,12 +268,17 @@ class Scheduler:
                 format="%(name)s - %(levelname)s - %(message)s",
                 level=self.logging_level,
             )
+            
+            if time_performance:
+                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\t - Embedding model: {embedding_lm_name}\n")
 
-            start = timer() if time_performance else None
+            embedding_times = []
             logging.info("Generating embeddings...")
             for index, lm_name in (pbar2 := tqdm(enumerate(lm_names), desc="Language Models", leave=True, total=len(lm_names))):
                 pbar2.set_postfix_str(f"{lm_names}")
                 logging.info(f"Running {lm_names}...")
+                start = timer() if time_performance else None
 
                 if not os.path.exists(os.path.join(self.workdir, f"{lm_name}_samples.json")):
                     return False
@@ -298,14 +303,19 @@ class Scheduler:
                 logging.info(f"Remaining budget: {self.budget}")
                 logging.info(f"used for lm: {self.embedding_lm[index2].cost}")
 
+                end = timer() if time_performance else None
+                embedding_times.append(end - start if time_performance else None)
+                if time_performance:
+                    with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                        f.write(f"\t\t - LM {lm_names[index]}: {embedding_times[-1]} seconds\n")
+
                 if self.budget < 0:
                     break
             
-            end = timer() if time_performance else None
-            performance_times.append(end - start if time_performance else None)
+            performance_times.append(sum(embedding_times) if time_performance else None)
             if time_performance:
                 with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                    f.write(f"\t - Embedding model {embedding_lm_names[index2]}: {end - start} seconds\n")
+                    f.write(f"\t\t - Total time: {performance_times[-1]} seconds\n")
 
             self.embedding_lm[index2].unload_model()
         
@@ -557,38 +567,16 @@ class Scheduler:
 
         print("\n\nStarting operations...")
         if bertScore:
-            start = timer() if time_performance else None
-            self.bertScoreOperation.execute(custom_inputs={"logging_level": self.logging_level, "ground_truth": ground_truth, "model_type": bertScore_model, "lm_names": lm_names, "batch_size": batch_size, "device": device})
-            end = timer() if time_performance else None
-            if time_performance:
-                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                    f.write(f"\n\nBERTScore operation took {end - start} seconds\n")
-                    f.write(f"\n  BERTScore has operated over the following language models:\n")
-                    f.write(f"\t - Language Models: {lm_names}\n")
+            self.bertScoreOperation.execute(custom_inputs={"logging_level": self.logging_level, "ground_truth": ground_truth, "model_type": bertScore_model, "lm_names": lm_names, "batch_size": batch_size, "device": device, "time_performance": time_performance})
             print(f"Done!\n")
 
         if selfCheckGPT:
-            start = timer() if time_performance else None
-            self.selfCheckGPTOperation.execute(custom_inputs={"logging_level": self.logging_level, "lm_names": lm_names, "device": device, "batch_size": batch_size, "spacy": spacy_separator})
-            end = timer() if time_performance else None
-            if time_performance:
-                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                    f.write(f"\n\nSelfCheckGPT operation took {end - start} seconds\n")
-                    f.write(f"\n  SelfCheckGPT has operated over the following language models:\n")
-                    f.write(f"\t - Language Models: {lm_names}\n")
+            self.selfCheckGPTOperation.execute(custom_inputs={"logging_level": self.logging_level, "lm_names": lm_names, "device": device, "batch_size": batch_size, "spacy": spacy_separator, "time_performance": time_performance})
             print(f"Done!\n")
 
         if checkEmbed:
             print("\n\nStarting CheckEmbed operation...")
-            start = timer() if time_performance else None
-            self.checkEmbedOperation.execute(custom_inputs={"ground_truth": ground_truth})
-            end = timer() if time_performance else None
-            if time_performance:
-                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                    f.write(f"\n\nCheckEmbed operation took {end - start} seconds\n")
-                    f.write(f"\n  ChekEmbed has operated over the combinations of the following language models and embedding models:\n")
-                    f.write(f"\t - Language Models: {lm_names}\n")
-                    f.write(f"\t - Embedding Models: {embedding_lm_names}\n")   
+            self.checkEmbedOperation.execute(custom_inputs={"ground_truth": ground_truth, "time_performance": time_performance})  
             print(f"Done!\n")
 
         print("\n\nStarting other operations...")
