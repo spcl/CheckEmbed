@@ -111,7 +111,7 @@ class CustomParser(Parser):
         
         return composite_ground_truth
 
-def start(current_dir: str, num_chunks: int = 1, start: int = StartingPoint.PROMPT, bool_magic: bool = False) -> None:
+def start(current_dir: str, num_chunks: int = 1, start: int = StartingPoint.PROMPT) -> None:
     """
     Start the main function.
 
@@ -121,8 +121,6 @@ def start(current_dir: str, num_chunks: int = 1, start: int = StartingPoint.PROM
     :type num_chunks: int
     :param start: The starting point. Defaults to StartingPoint.PROMPT.
     :type start: StartingPoint
-    :param bool_magic: TODO. Defaults to False.
-    :type bool_magic: bool
     """
 
     # Config file for the LLM(s)
