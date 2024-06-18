@@ -24,6 +24,8 @@ from CheckEmbed.operations import Operation
 from CheckEmbed.parser import Parser
 from CheckEmbed.embedder import Embedder
 
+from enum import Enum
+
 class StartingPoint(Enum):
     """
     Enum representing the starting point options for the scheduler.
@@ -150,6 +152,10 @@ class Scheduler:
             prompts = json.load(f)["data"]
         prompts = [p["prompt"] for p in prompts]
 
+        if time_performance:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\nSample generation\n")
+
         # Sampling
         performance_times = []
         for index, lm_name in (pbar := tqdm(enumerate(lm_names), desc="Language Models", leave=True, total=len(lm_names))):
@@ -181,6 +187,9 @@ class Scheduler:
 
             end = timer() if time_performance else None
             performance_times.append(end - start if time_performance else None)
+            if time_performance:
+                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\t - LM {lm_names[index]}: {end - start} seconds\n")
 
             # Save results to json files
             logging.info("Saving results...")
@@ -206,10 +215,8 @@ class Scheduler:
 
         if time_performance:
             with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                f.write(f"\n\nSample generation took {sum(performance_times)} seconds:\n")
-                for index, time in enumerate(performance_times):
-                    f.write(f"\t - LM {lm_names[index]}: {time} seconds\n")
-                f.write(f"\n\tNumber of prompts per LM: {len(prompts)}\n")
+                f.write(f"\n\tTotal time: {sum(performance_times)} seconds\n")
+                f.write(f"\tNumber of prompts per LM: {len(prompts)}\n")
                 f.write(f"\tNumber of samples per prompt: {num_sample}\n")
         
         return True
@@ -243,6 +250,10 @@ class Scheduler:
 
         if self.embedder is None or self.embedding_lm is None:
             return False
+        
+        if time_performance:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\nEmbedding generation\n")
         
         performance_times = []
         # Getting samples from the json file
@@ -292,6 +303,10 @@ class Scheduler:
             
             end = timer() if time_performance else None
             performance_times.append(end - start if time_performance else None)
+            if time_performance:
+                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\t - Embedding model {embedding_lm_names[index2]}: {end - start} seconds\n")
+
             self.embedding_lm[index2].unload_model()
         
         logger = logging.getLogger("root")
@@ -301,10 +316,8 @@ class Scheduler:
 
         if time_performance:
             with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                f.write(f"\n\nEmbedding generation took {sum(performance_times)} seconds:\n")
-                for index, time in enumerate(performance_times):
-                    f.write(f"\t - Embedding model {embedding_lm_names[index]}: {time} seconds\n")
-                f.write(f"\n\tNumber of language models per embedding: {len(lm_names)}\n")
+                f.write(f"\n\tTotal time: {sum(performance_times)} seconds\n")
+                f.write(f"\tNumber of language models per embedding: {len(lm_names)}\n")
                 f.write(f"\tNumber of prompts per LM: {len(samples)}\n")
                 f.write(f"\tNumber of samples per prompt: {len(samples[0])}\n")
 
@@ -321,6 +334,10 @@ class Scheduler:
                 format="%(name)s - %(levelname)s - %(message)s",
                 level=self.logging_level,
             )
+
+            if time_performance and ground_truth:
+                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\n\nEmbedding generation for the ground truth\n")
 
             performance_times = []
             logging.info("Generating embeddings for ground of truth...")
@@ -347,6 +364,9 @@ class Scheduler:
 
                 end = timer() if time_performance else None
                 performance_times.append(end - start if time_performance else None)
+                if time_performance and ground_truth:
+                    with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                        f.write(f"\t - Embedding model {embedding_lm_names[index]}: {end - start} seconds\n")
 
                 self.embedding_lm[index].unload_model()
 
@@ -360,10 +380,8 @@ class Scheduler:
 
         if time_performance and ground_truth:
             with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                f.write(f"\n\nEmbedding generation for the ground truth took {sum(performance_times)} seconds:\n")
-                for index, time in enumerate(performance_times):
-                    f.write(f"\t - Embedding model {embedding_lm_names[index]}: {time} seconds\n")
-                f.write(f"\n\tNumber of ground truth samples per embedding: {len(ground_truth_data)}\n")
+                f.write(f"\n\tTotal time: {sum(performance_times)} seconds\n")
+                f.write(f"\tNumber of ground truth samples per embedding: {len(ground_truth_data)}\n")
 
         return True
 
@@ -378,6 +396,9 @@ class Scheduler:
         :param time_performance: A flag indicating whether to measure the time performance of the operations.
         :type time_performance: bool
         """
+        if time_performance:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\nOperations\n")
         
         performance_times = []
         for operation in self.operations:
@@ -386,6 +407,9 @@ class Scheduler:
                 operation.execute(custom_inputs={"logging_level": self.logging_level, "ground_truth": ground_truth})
                 end = timer() if time_performance else None
                 performance_times.append(end - start if time_performance else None)
+                if time_performance:
+                    with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                        f.write(f"\t - Operation {operation}: {end - start} seconds\n")
 
                 print(f"Done! Remaining {len(self.operations) - self.operations.index(operation) - 1} operations to run\n")
 
@@ -400,9 +424,7 @@ class Scheduler:
 
         if time_performance:
             with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                f.write(f"\n\nOperations took {sum(performance_times)} seconds:\n")
-                for index, time in enumerate(performance_times):
-                    f.write(f"\t - Operation {self.operations[index]}: {time} seconds\n")
+                f.write(f"\n\tTotal time: {sum(performance_times)} seconds\n")
 
     def run(
             self,
@@ -483,7 +505,7 @@ class Scheduler:
         if time_performance:
             if not os.path.exists(os.path.join(self.workdir, "runtimes")):
                 os.mkdir(os.path.join(self.workdir, "runtimes"))
-            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "w") as f:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
                 f.write("Starting performance measurement\n")
 
         print("Starting point: ", startingPoint)
