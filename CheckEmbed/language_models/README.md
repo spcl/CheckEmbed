@@ -26,12 +26,16 @@ The following sections describe how to instantiate individual models and how to 
 | api_key             | Personal API key that will be used to access OpenAI API.                                                                                                                                                                                                                                                                                                            |
 
 - Instantiate the language model based on the selected configuration key (predefined / custom).
+    - `max_concurrent_request` is by default 10. Adjust the value based on your tier [rate limits](https://platform.openai.com/docs/guides/rate-limits).
 ```python
 lm = language_models.ChatGPT(
             config_path,
             model_name = <configuration-key>,
+            cache = <False | True>,
+            max_concurrent_requests = <int number>
         )
 ```
+
 
 ## Adding LLMs
 More LLMs can be added by following these steps:

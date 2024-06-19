@@ -11,10 +11,12 @@
 #
 # modifications: Lorenzo Paleari
 
+
+import asyncio
 import backoff
 import os
 from typing import List, Dict, Union
-from openai import OpenAI, OpenAIError
+from openai import AsyncOpenAI, OpenAIError
 from openai.types.chat.chat_completion import ChatCompletion
 from tqdm import tqdm
 
@@ -30,17 +32,19 @@ class ChatGPT(AbstractLanguageModel):
 
     # modified by Lorenzo Paleari
     def __init__(
-        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False
+        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False, max_concurrent_requests: int = 10
     ) -> None:
         """
         Initialize the ChatGPT instance with configuration, model details, and caching options.
 
         :param config_path: Path to the configuration file. Defaults to "".
         :type config_path: str
-        :param model_name: Name of the model, default is 'chatgpt'. Used to select the correct configuration.
+        :param model_name: Name of the model, default is 'chatgpt4'. Used to select the correct configuration.
         :type model_name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
+        :param max_concurrent_requests: The maximum number of concurrent requests. Defaults to 10.
+        :type max_concurrent_requests: int
         """
         super().__init__(config_path, model_name, cache)
         self.config: Dict = self.config[model_name]
@@ -63,7 +67,9 @@ class ChatGPT(AbstractLanguageModel):
         if self.api_key == "":
             self.logger.warning("OPENAI_API_KEY is not set")
         # Initialize the OpenAI Client
-        self.client = OpenAI(api_key=self.api_key, organization=self.organization)
+        self.client = AsyncOpenAI(api_key=self.api_key, organization=self.organization)
+
+        self.max_concurrent_requests = max_concurrent_requests
 
     # written by Lorenzo Paleari
     def load_model(self, device: str = None) -> None:
@@ -96,21 +102,31 @@ class ChatGPT(AbstractLanguageModel):
         :return: Response(s) from the OpenAI model.
         :rtype: List[ChatCompletion]
         """
-        if self.cache and query in self.response_cache:
-            self.logger.debug(f"Used cache for query: {query}")
-            return self.response_cache[query]
-        
-        response = []
-        for _ in tqdm(range(num_query), desc="Samples", leave=False):
-            res = self.chat([{"role": "user", "content": query}], 1)
-            response.append(res)
+        async def async_query() -> List[ChatCompletion]:
+            if self.cache and query in self.response_cache:
+                self.logger.debug(f"Used cache for query: {query}")
+                return self.response_cache[query]
+            
+            async def sem_task(semaphore, task):
+                async with semaphore:
+                    return await task
 
-        if self.cache:
-            self.response_cache[query] = response
-        return response
+            semaphore = asyncio.Semaphore(self.max_concurrent_requests)
+            tasks = [sem_task(semaphore, self.chat([{"role": "user", "content": query}], 1)) for _ in range(num_query)]
+            
+            responses = []
+            for task in tqdm(asyncio.as_completed(tasks), total=num_query, desc="Samples", leave=False):
+                response = await task
+                responses.append(response)
+
+            if self.cache:
+                self.response_cache[query] = response
+            return responses
+        
+        return asyncio.run(async_query())
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)
-    def chat(self, messages: List[Dict], num_responses: int = 1) -> ChatCompletion:
+    async def chat(self, messages: List[Dict], num_responses: int = 1) -> ChatCompletion:
         """
         Send chat messages to the OpenAI model and retrieves the model's response.
         Implements backoff on OpenAI error.
@@ -122,7 +138,7 @@ class ChatGPT(AbstractLanguageModel):
         :return: The OpenAI model's response.
         :rtype: ChatCompletion
         """
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model_id,
             messages=messages,
             temperature=self.temperature,

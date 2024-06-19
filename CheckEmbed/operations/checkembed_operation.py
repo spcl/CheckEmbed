@@ -8,10 +8,10 @@
 
 import os
 import json
-
 import numpy as np
 
 from typing import Any
+from timeit import default_timer as timer
 
 from CheckEmbed.operations import Operation
 from CheckEmbed.utility import cosine_similarity, frobenius_norm_no_diag, matrix_std_dev_no_diag
@@ -42,11 +42,14 @@ class CheckEmbedOperation(Operation):
         :param custom_inputs: The custom inputs for the operation.
         :type custom_inputs: Any
         """
+        time_performance = custom_inputs["time_performance"]
 
+        performance_times = []
         # For every language model / embedding model 
         for file in os.listdir(self.embeddings_dir_path):
             if ".json" in file and not file.startswith("ground_truth_"):
                 
+                start = timer() if time_performance else None
                 folder_name = file.replace("_" + file.split("_")[2], "")
                 file_name_completion_for_ground_truth = file.replace(file.split("_")[0] + "_", "")
 
@@ -118,6 +121,10 @@ class CheckEmbedOperation(Operation):
                                                 else frobenius_norm_no_diag(pearson_corr) 
                                                 for pearson_corr in pearson_corr_array]
 
+                end = timer() if time_performance else None
+                if time_performance:
+                    performance_times.append({folder_name: end - start})
+
                 # Store the results
                 with open(os.path.join(self.result_dir_path, folder_name + "_results.json"), "w") as f:
                     results_json = [{
@@ -131,3 +138,15 @@ class CheckEmbedOperation(Operation):
                     } for index, cosine_sim, frob_norm_cosine_sim, std_dev_cosine_sim, pearson_corr, frob_norm_pearson_corr, std_dev_pearson_corr 
                         in zip(range(len(cosine_similarity_matrix_array)), cosine_similarity_matrix_array, frobenius_norms_cosine_sim, std_dev_cosine_sim_array, pearson_corr_array, frobenius_norms_pearson_corr, std_dev_pearson_corr_array)]
                     json.dump({"data": results_json}, f, indent=4)
+
+        # Reorder the performance times first on embedding and then on language model names
+        performance_times.sort(key=lambda x: (list(x.keys())[0].split("_")[1], list(x.keys())[0].split("_")[0]))
+        with open(os.path.join(self.result_dir_path, "../runtimes", "performance_log.log"), "a") as f:
+            f.write(f"\n\nCheckEmbed operation:\n")
+            for time in performance_times:
+                time_key = list(time.keys())[0]
+                time_value = list(time.values())[0]
+                formatted_string = f"\t - Time for {time_key.split('_')[0]:<10} {time_key.split('_')[1]:>15}: {time_value}\n"
+                f.write(formatted_string)
+
+                

@@ -6,10 +6,11 @@
 #
 # main author: Lorenzo Paleari
 
+import asyncio
 import backoff
 import os
 from typing import List, Dict, Union
-from openai import OpenAI, OpenAIError
+from openai import AsyncOpenAI, OpenAIError
 from openai.types import CreateEmbeddingResponse
 from tqdm import tqdm
 
@@ -24,7 +25,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
     """
 
     def __init__(
-        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False
+        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False, max_concurrent_requests: int = 10
     ) -> None:
         """
         Initialize the EmbeddingGPT instance with configuration, model details, and caching options.
@@ -35,6 +36,8 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         :type model_name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
+        :param max_concurrent_requests: The maximum number of concurrent requests. Defaults to 10.
+        :type max_concurrent_requests: int
         """
         super().__init__(config_path, model_name, cache)
         self.config: Dict = self.config[model_name]
@@ -52,7 +55,9 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         if self.api_key == "":
             self.logger.warning("OPENAI_API_KEY is not set")
         # Initialize the OpenAI Client
-        self.client = OpenAI(api_key=self.api_key, organization=self.organization)
+        self.client = AsyncOpenAI(api_key=self.api_key, organization=self.organization)
+
+        self.max_concurrent_requests = max_concurrent_requests
 
     def load_model(self, device: str = None) -> None:
         """
@@ -78,16 +83,28 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         :return: The embeddings of the text.
         :rtype: List[List[float]]
         """
-        if isinstance(input, str):
-            input = [input]
+        async def async_query(input: Union[List[str], str]):
+            if isinstance(input, str):
+                input = [input]
+            
+            async def sem_task(semaphore, task):
+                async with semaphore:
+                    return await task
+                
+            semaphore = asyncio.Semaphore(self.max_concurrent_requests)
+            tasks = [sem_task(semaphore, self.embed_query(i)) for i in input]
 
-        res = []
-        for i in tqdm(input, desc="samples", leave=False):
-            res.append(self.embed_query(i).data[0].embedding)
-        return res
+            responses = []
+            for task in tqdm(asyncio.as_completed(tasks), total=len(input), desc="Embeddings", leave=False):
+                response = await task
+                responses.append(response.data[0].embedding)
+
+            return responses
+        
+        return asyncio.run(async_query(input))
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)
-    def embed_query(self, input: str) -> CreateEmbeddingResponse:
+    async def embed_query(self, input: str) -> CreateEmbeddingResponse:
         """
         Embed the given text into a vector.
 
@@ -96,7 +113,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         :return: The embedding of the text.
         :rtype: CreateEmbeddingResponse
         """
-        response = self.client.embeddings.create(
+        response = await self.client.embeddings.create(
             model=self.model_id,
             input=input,
             dimensions=self.dimension,

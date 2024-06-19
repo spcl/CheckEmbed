@@ -30,7 +30,6 @@ If you are a user and you just want to use `CheckEmbed`, you can install it from
 git clone https://github.com/spcl/CheckEmbed.git
 cd CheckEmbed
 pip install .
-python3 -m spacy download "en_core_web_sm"
 
 # If you want to use a CUDA GPU, please install the following environment as well.
 pip install ".[cuda]"
@@ -40,7 +39,6 @@ If you are a developer and you want to modify the code, you can install it in ed
 git clone https://github.com/spcl/CheckEmbed.git
 cd CheckEmbed
 pip install -e .
-python3 -m spacy download "en_core_web_sm"
 
 # If you want to use a CUDA GPU, please install the following environment as well.
 pip install -e ".[cuda]"
