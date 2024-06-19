@@ -12,7 +12,7 @@ import logging
 
 from enum import Enum
 from typing import List
-
+from timeit import default_timer as timer
 from tqdm import tqdm
 
 from CheckEmbed.language_models import AbstractLanguageModel
@@ -119,7 +119,7 @@ class Scheduler:
 
         return True
 
-    def _samples_generation(self, num_sample: int, lm_names: List[str], device: str) -> bool:
+    def _samples_generation(self, num_sample: int, lm_names: List[str], device: str, time_performance: bool) -> bool:
         """
         Generate samples for the given prompts using the language models and save them to a json file.
         The number of sample generated for each prompt is given by num_sample.
@@ -130,6 +130,8 @@ class Scheduler:
         :type lm_names: List[str]
         :param device: The Torch device to use for the operations.
         :type device: str
+        :param time_performance: A flag indicating whether to measure the time performance of the operation.
+        :type time_performance: bool
         :return: False if the language models are not available or the prompts are missing, True otherwise.
         :rtype: bool
         """
@@ -150,13 +152,19 @@ class Scheduler:
             prompts = json.load(f)["data"]
         prompts = [p["prompt"] for p in prompts]
 
+        if time_performance:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\nSample generation\n")
+
         # Sampling
+        performance_times = []
         for index, lm_name in (pbar := tqdm(enumerate(lm_names), desc="Language Models", leave=True, total=len(lm_names))):
             pbar.set_postfix_str(f"{lm_name}")
             logging.info(f"Running {lm_name}")
 
             self.lm[index].load_model(device=device)
 
+            start = timer() if time_performance else None
             logging.info("Generating samples...")
             responses = []
             try:
@@ -176,6 +184,12 @@ class Scheduler:
                 continue
 
             responses = self.parser.answer_parser(responses)
+
+            end = timer() if time_performance else None
+            performance_times.append(end - start if time_performance else None)
+            if time_performance:
+                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\t - LM {lm_names[index]}: {end - start} seconds\n")
 
             # Save results to json files
             logging.info("Saving results...")
@@ -198,6 +212,13 @@ class Scheduler:
         for handler in logger.handlers:
             handler.close()
             logger.removeHandler(handler)
+
+        if time_performance:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\tTotal time: {sum(performance_times)} seconds\n")
+                f.write(f"\tNumber of prompts per LM: {len(prompts)}\n")
+                f.write(f"\tNumber of samples per prompt: {num_sample}\n")
+        
         return True
 
     def _embeddings_generation(
@@ -206,6 +227,7 @@ class Scheduler:
             embedding_lm_names: List[str],
             ground_truth: bool,
             device: str,
+            time_performance: bool
         ) -> bool:
         """
         Generate embeddings for the given samples using the embedding models and save them to a json file.
@@ -218,6 +240,8 @@ class Scheduler:
         :type ground_truth: bool
         :param device: The Torch device to use for the operations.
         :type device: str
+        :param time_performance: A flag indicating whether to measure the time performance of the operation.
+        :type time_performance: bool
         :return: False if the embedder or the embedding models are not available, True otherwise.
         :rtype: bool
         """
@@ -227,6 +251,11 @@ class Scheduler:
         if self.embedder is None or self.embedding_lm is None:
             return False
         
+        if time_performance:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\nEmbedding generation\n")
+        
+        performance_times = []
         # Getting samples from the json file
         for index2, embedding_lm_name in (pbar := tqdm(enumerate(embedding_lm_names), desc="Embedding Language Models", leave=False, total=len(embedding_lm_names))):
             pbar.set_postfix_str(f"{embedding_lm_name}")
@@ -239,11 +268,17 @@ class Scheduler:
                 format="%(name)s - %(levelname)s - %(message)s",
                 level=self.logging_level,
             )
+            
+            if time_performance:
+                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\t - Embedding model: {embedding_lm_name}\n")
 
+            embedding_times = []
             logging.info("Generating embeddings...")
             for index, lm_name in (pbar2 := tqdm(enumerate(lm_names), desc="Language Models", leave=True, total=len(lm_names))):
                 pbar2.set_postfix_str(f"{lm_names}")
                 logging.info(f"Running {lm_names}...")
+                start = timer() if time_performance else None
 
                 if not os.path.exists(os.path.join(self.workdir, f"{lm_name}_samples.json")):
                     return False
@@ -268,8 +303,19 @@ class Scheduler:
                 logging.info(f"Remaining budget: {self.budget}")
                 logging.info(f"used for lm: {self.embedding_lm[index2].cost}")
 
+                end = timer() if time_performance else None
+                embedding_times.append(end - start if time_performance else None)
+                if time_performance:
+                    with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                        f.write(f"\t\t - LM {lm_names[index]}: {embedding_times[-1]} seconds\n")
+
                 if self.budget < 0:
                     break
+            
+            performance_times.append(sum(embedding_times) if time_performance else None)
+            if time_performance:
+                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\t\t - Total time: {performance_times[-1]} seconds\n")
 
             self.embedding_lm[index2].unload_model()
         
@@ -277,6 +323,13 @@ class Scheduler:
         for handler in logger.handlers:
             handler.close()
             logger.removeHandler(handler)
+
+        if time_performance:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\tTotal time: {sum(performance_times)} seconds\n")
+                f.write(f"\tNumber of language models per embedding: {len(lm_names)}\n")
+                f.write(f"\tNumber of prompts per LM: {len(samples)}\n")
+                f.write(f"\tNumber of samples per prompt: {len(samples[0])}\n")
 
         if ground_truth:
             # Getting the ground truth from the json file
@@ -292,12 +345,18 @@ class Scheduler:
                 level=self.logging_level,
             )
 
+            if time_performance and ground_truth:
+                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\n\nEmbedding generation for the ground truth\n")
+
+            performance_times = []
             logging.info("Generating embeddings for ground of truth...")
             for index, embedding_lm_name in (pbar:= tqdm(enumerate(embedding_lm_names), desc="Embedding Language Models", leave=True, total=len(embedding_lm_names))):
                 pbar.set_postfix_str(f"{embedding_lm_name}")
                 logging.info(f"Running {embedding_lm_name}...")
 
                 self.embedding_lm[index].load_model(device=device)
+                start = timer() if time_performance else None
 
                 embeddings = self.embedder.embed(self.embedding_lm[index], ground_truth_data)
 
@@ -313,6 +372,12 @@ class Scheduler:
                 logging.info(f"Remaining budget: {self.budget}")
                 logging.info(f"used for lm: {self.embedding_lm[index].cost}")
 
+                end = timer() if time_performance else None
+                performance_times.append(end - start if time_performance else None)
+                if time_performance and ground_truth:
+                    with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                        f.write(f"\t - Embedding model {embedding_lm_names[index]}: {end - start} seconds\n")
+
                 self.embedding_lm[index].unload_model()
 
                 if self.budget < 0:
@@ -323,9 +388,14 @@ class Scheduler:
             handler.close()
             logger.removeHandler(handler)
 
+        if time_performance and ground_truth:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\tTotal time: {sum(performance_times)} seconds\n")
+                f.write(f"\tNumber of ground truth samples per embedding: {len(ground_truth_data)}\n")
+
         return True
 
-    def _operations(self, ground_truth: bool) -> None:
+    def _operations(self, ground_truth: bool, time_performance: bool) -> None:
         """
         Execute the operations in the given order.
         If an operation fails, it will be logged and the scheduler will continue with the next operation.
@@ -333,11 +403,23 @@ class Scheduler:
 
         :param ground_truth: A flag indicating whether the ground truth is available.
         :type ground_truth: bool
+        :param time_performance: A flag indicating whether to measure the time performance of the operations.
+        :type time_performance: bool
         """
+        if time_performance:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\nOperations\n")
         
+        performance_times = []
         for operation in self.operations:
             try:
+                start = timer() if time_performance else None
                 operation.execute(custom_inputs={"logging_level": self.logging_level, "ground_truth": ground_truth})
+                end = timer() if time_performance else None
+                performance_times.append(end - start if time_performance else None)
+                if time_performance:
+                    with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                        f.write(f"\t - Operation {operation}: {end - start} seconds\n")
 
                 print(f"Done! Remaining {len(self.operations) - self.operations.index(operation) - 1} operations to run\n")
 
@@ -346,8 +428,13 @@ class Scheduler:
                     handler.close()
                     logger.removeHandler(handler)
             except Exception as e:
+                end = timer() if time_performance else None
                 logging.error(f"Error while running {operation}: {e}")
                 continue
+
+        if time_performance:
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\tTotal time: {sum(performance_times)} seconds\n")
 
     def run(
             self,
@@ -358,6 +445,7 @@ class Scheduler:
             checkEmbed: bool = True,
             ground_truth: bool = False,
             spacy_separator: bool = True,
+            time_performance: bool = False,
             num_samples: int = 10, 
             lm_names: List[str] = [],
             embedding_lm_names: List[str] = [],
@@ -382,6 +470,8 @@ class Scheduler:
         :type ground_truth: bool
         :param spacy_separator: A flag indicating whether to use the spacy separator for the SelfCheckGPT operation. If False, sentences are separated at the newline character. Defaults to True.
         :type spacy_separator: bool
+        :param time_performance: A flag indicating whether to measure the time performance of the operations. Defaults to False.
+        :type time_performance: bool
         :param num_samples: The number of samples to generate for each prompt. Defaults to 10.
         :type num_samples: int
         :param lm_names: The names of the language models used for sampling. Defaults to an empty list.
@@ -422,11 +512,18 @@ class Scheduler:
             if selfCheckGPT and not os.path.exists(os.path.join(self.workdir, "plots", "SelfCheckGPT")):
                 os.mkdir(os.path.join(self.workdir, "plots", "SelfCheckGPT"))
 
+        if time_performance:
+            if not os.path.exists(os.path.join(self.workdir, "runtimes")):
+                os.mkdir(os.path.join(self.workdir, "runtimes"))
+            with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                f.write("Starting performance measurement\n")
 
         print("Starting point: ", startingPoint)
 
         # PROMPT GENERATION
         if startingPoint.value <= StartingPoint.PROMPT.value:
+            start = timer() if time_performance else None
+
             executed = self._prompt_generation()
             if not executed:
                 print("For prompt generation a parser is required")
@@ -443,10 +540,15 @@ class Scheduler:
                         json.dump({"ground_truth": self.parser.ground_truth_extraction()}, f, indent=4)
                     print("Ground truth generation completed\n")
 
+            end = timer() if time_performance else None
+            if time_performance:
+                with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\n\nPrompt generation took {end - start} seconds\n")
+
         # SAMPLES GENERATION
         if startingPoint.value <= StartingPoint.SAMPLES.value:
             print("\n\nStarting samples generation...")
-            executed = self._samples_generation(num_samples, lm_names, device)
+            executed = self._samples_generation(num_samples, lm_names, device, time_performance)
             if not executed:
                 print("For samples generation a parser or a language model with prompts.json file is required")
                 return
@@ -456,7 +558,7 @@ class Scheduler:
         # EMBEDDINGS GENERATION
         if startingPoint.value <= StartingPoint.EMBEDDINGS.value:
             print("\n\nEmbeddings generation started...")
-            executed = self._embeddings_generation(lm_names, embedding_lm_names, ground_truth, device)
+            executed = self._embeddings_generation(lm_names, embedding_lm_names, ground_truth, device, time_performance)
             if not executed:
                 print("For the embeddings generation requires an embedder, an embedding model, a lists of LLMs and embedding model names.")
                 return
@@ -465,18 +567,18 @@ class Scheduler:
 
         print("\n\nStarting operations...")
         if bertScore:
-            self.bertScoreOperation.execute(custom_inputs={"logging_level": self.logging_level, "ground_truth": ground_truth, "model_type": bertScore_model, "lm_names": lm_names, "batch_size": batch_size, "device": device})
+            self.bertScoreOperation.execute(custom_inputs={"logging_level": self.logging_level, "ground_truth": ground_truth, "model_type": bertScore_model, "lm_names": lm_names, "batch_size": batch_size, "device": device, "time_performance": time_performance})
             print(f"Done!\n")
 
         if selfCheckGPT:
-            self.selfCheckGPTOperation.execute(custom_inputs={"logging_level": self.logging_level, "lm_names": lm_names, "device": device, "batch_size": batch_size, "spacy": spacy_separator})
+            self.selfCheckGPTOperation.execute(custom_inputs={"logging_level": self.logging_level, "lm_names": lm_names, "device": device, "batch_size": batch_size, "spacy": spacy_separator, "time_performance": time_performance})
             print(f"Done!\n")
 
         if checkEmbed:
             print("\n\nStarting CheckEmbed operation...")
-            self.checkEmbedOperation.execute(custom_inputs={"ground_truth": ground_truth})
+            self.checkEmbedOperation.execute(custom_inputs={"ground_truth": ground_truth, "time_performance": time_performance})  
             print(f"Done!\n")
 
         print("\n\nStarting other operations...")
-        self._operations(ground_truth=ground_truth)
+        self._operations(ground_truth=ground_truth, time_performance=time_performance)
         print("\nOperations completed!")

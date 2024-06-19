@@ -14,6 +14,7 @@ import bert_score
 import numpy as np
 from tqdm import tqdm
 from typing import Any
+from timeit import default_timer as timer
 
 from CheckEmbed.operations import Operation
 from CheckEmbed.utility import capture_specific_stderr, frobenius_norm_no_diag, matrix_std_dev_no_diag
@@ -46,6 +47,7 @@ class BertScoreOperation(Operation):
         """
 
         print("\n\nRunning BertScore operation.")
+        time_performance = custom_inputs["time_performance"]
         
         # Initialize logging
         logging.basicConfig(
@@ -55,11 +57,18 @@ class BertScoreOperation(Operation):
             level=custom_inputs["logging_level"],
         )
 
+        if time_performance:
+            with open(os.path.join(self.sample_dir_path, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\nBERTScore operation\n")
+
         # Run BertScore for every pair of language model and samples
+        performance_times = []
         for lm_name in (pbar := tqdm(custom_inputs["lm_names"], desc="Language Models", leave=True)):
             pbar.set_postfix_str(f"{lm_name}")
             logging.info(f"Loading responses from {lm_name}.")
             samples = []
+
+            start = timer() if time_performance else None
 
             # Load samples from the language model
             with open(os.path.join(self.sample_dir_path, f"{lm_name}_samples.json")) as f:
@@ -124,6 +133,12 @@ class BertScoreOperation(Operation):
                                     else frobenius_norm_no_diag(result) for result in results]
             std_devs = [matrix_std_dev_no_diag(result[:-1,:-1]) if custom_inputs["ground_truth"] 
                             else frobenius_norm_no_diag(result) for result in results]
+            
+            end = timer() if time_performance else None
+            if time_performance:
+                performance_times.append(end - start)
+                with open(os.path.join(self.sample_dir_path, "runtimes", "performance_log.log"), "a") as f:
+                    f.write(f"\t - Time for {lm_name}: {end - start}\n")
 
             # Store results
             with open(os.path.join(self.result_dir_path, f"{lm_name}_bert.json"), "w") as f:
@@ -136,3 +151,7 @@ class BertScoreOperation(Operation):
                 json.dump({"data": results_json}, f, indent=4)
 
             logging.info(f"Saved results for {lm_name}.")
+        
+        if time_performance:
+            with open(os.path.join(self.sample_dir_path, "runtimes", "performance_log.log"), "a") as f:
+                f.write(f"\n\tTotal time: {sum(performance_times)}\n")
