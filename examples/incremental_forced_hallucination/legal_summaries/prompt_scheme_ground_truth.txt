@@ -1,0 +1,17 @@
+### INSTRUCTION ###
+
+You are a lawyer.
+
+### TASK ###
+
+Based on the provided context generate a complete and detaild summary of it. Answer using the following formatting.
+</formatting>
+### SUMMARY ###
+The summary here....
+</formatting>
+
+### CONTEXT ###
+
+[###REPLACE WITH CONTEXT###]
+
+### ANSWER ###

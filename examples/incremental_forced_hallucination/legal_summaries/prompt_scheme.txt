@@ -1,0 +1,26 @@
+### INSTRUCTION ###
+
+You are a lawyer.
+
+### TASK ###
+
+## SUBTASK 1 ##
+Based on the provided context generate ### NUMBER ### completely false information (fact hallucinations) about it.
+
+## SUBTASK 2 ##
+Create a complete and detailed summary of the provided context including all the errors generated in SUBTASK 1.
+When including the hallucinations you must not say they are wrong.
+
+Answer using the following formatting.
+<formatting>
+### ERRORS ###
+List of fact hallucinations to be later included in the summary...
+### SUMMARY ###
+The summary here....
+</formatting>
+
+### CONTEXT ###
+
+[###REPLACE WITH CONTEXT###]
+
+### ANSWER ###
