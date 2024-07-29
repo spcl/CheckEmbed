@@ -297,11 +297,12 @@ class Scheduler:
                     embeddings_json = [{"prompt_index": i, "embeddings": embedding} for i, embedding in enumerate(embeddings)]
                     json.dump({"data": embeddings_json}, f, indent=4)
 
-                logging.info(f"Finished with {embedding_lm_name}.")
+                logging.info(f"Finished with {embedding_lm_name}-{lm_name}.")
                 self.budget -= self.embedding_lm[index2].cost
 
                 logging.info(f"Remaining budget: {self.budget}")
                 logging.info(f"used for lm: {self.embedding_lm[index2].cost}")
+                self.embedding_lm[index2].cost = 0
 
                 end = timer() if time_performance else None
                 embedding_times.append(end - start if time_performance else None)
