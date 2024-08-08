@@ -128,7 +128,7 @@ class CustomParser(Parser):
             json.dump({"data": hallucinations_json}, f, indent=4)
         return new_responses
 
-def start(current_dir: str, ground_truth_gen: bool = False, error_number: int = 0, start: int = StartingPoint.PROMPT, flag:bool=False) -> None:
+def start(current_dir: str, ground_truth_gen: bool = False, error_number: int = 0, start: int = StartingPoint.PROMPT) -> None:
     """
     Execute the incremental forced hallucination use case with a specific error number.
 
