@@ -130,7 +130,7 @@ class Scheduler:
         :type lm_names: List[str]
         :param device: The Torch device to use for the operations.
         :type device: str
-        :param time_performance: A flag indicating whether to measure the time performance of the operation.
+        :param time_performance: A flag indicating whether to measure the runtime of the operation.
         :type time_performance: bool
         :return: False if the language models are not available or the prompts are missing, True otherwise.
         :rtype: bool
@@ -240,7 +240,7 @@ class Scheduler:
         :type ground_truth: bool
         :param device: The Torch device to use for the operations.
         :type device: str
-        :param time_performance: A flag indicating whether to measure the time performance of the operation.
+        :param time_performance: A flag indicating whether to measure the runtime of the operation.
         :type time_performance: bool
         :return: False if the embedder or the embedding models are not available, True otherwise.
         :rtype: bool
@@ -297,11 +297,18 @@ class Scheduler:
                     embeddings_json = [{"prompt_index": i, "embeddings": embedding} for i, embedding in enumerate(embeddings)]
                     json.dump({"data": embeddings_json}, f, indent=4)
 
-                logging.info(f"Finished with {embedding_lm_name}.")
+                logging.info(f"Finished with {embedding_lm_name}-{lm_name}.")
                 self.budget -= self.embedding_lm[index2].cost
 
                 logging.info(f"Remaining budget: {self.budget}")
                 logging.info(f"used for lm: {self.embedding_lm[index2].cost}")
+                self.embedding_lm[index2].cost = 0
+
+                end = timer() if time_performance else None
+                embedding_times.append(end - start if time_performance else None)
+                if time_performance:
+                    with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                        f.write(f"\t\t - LM {lm_names[index]}: {embedding_times[-1]} seconds\n")
 
                 end = timer() if time_performance else None
                 embedding_times.append(end - start if time_performance else None)
@@ -403,7 +410,7 @@ class Scheduler:
 
         :param ground_truth: A flag indicating whether the ground truth is available.
         :type ground_truth: bool
-        :param time_performance: A flag indicating whether to measure the time performance of the operations.
+        :param time_performance: A flag indicating whether to measure the runtime of the operations.
         :type time_performance: bool
         """
         if time_performance:
@@ -470,7 +477,7 @@ class Scheduler:
         :type ground_truth: bool
         :param spacy_separator: A flag indicating whether to use the spacy separator for the SelfCheckGPT operation. If False, sentences are separated at the newline character. Defaults to True.
         :type spacy_separator: bool
-        :param time_performance: A flag indicating whether to measure the time performance of the operations. Defaults to False.
+        :param time_performance: A flag indicating whether to measure the runtime of the operations. Defaults to False.
         :type time_performance: bool
         :param num_samples: The number of samples to generate for each prompt. Defaults to 10.
         :type num_samples: int

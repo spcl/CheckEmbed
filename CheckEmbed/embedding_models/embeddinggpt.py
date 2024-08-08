@@ -13,6 +13,7 @@ from typing import List, Dict, Union
 from openai import AsyncOpenAI, OpenAIError
 from openai.types import CreateEmbeddingResponse
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from CheckEmbed.embedding_models import AbstractEmbeddingModel
 
@@ -59,6 +60,8 @@ class EmbeddingGPT(AbstractEmbeddingModel):
 
         self.max_concurrent_requests = max_concurrent_requests
 
+        self.max_concurrent_requests = max_concurrent_requests
+
     def load_model(self, device: str = None) -> None:
         """
         Load the embedding model locally.
@@ -76,32 +79,28 @@ class EmbeddingGPT(AbstractEmbeddingModel):
 
     def generate_embedding(self, input: Union[List[str], str]) -> List[List[float]]:
         """
-        Abstract method to generate embedding for the given input text.
+        Generate embeddings for the given input text.
 
         :param input: The input texts to embed.
         :type input: Union[List[str], str]
         :return: The embeddings of the text.
         :rtype: List[List[float]]
         """
-        async def async_query(input: Union[List[str], str]):
-            if isinstance(input, str):
-                input = [input]
-            
-            async def sem_task(semaphore, task):
-                async with semaphore:
-                    return await task
-                
-            semaphore = asyncio.Semaphore(self.max_concurrent_requests)
-            tasks = [sem_task(semaphore, self.embed_query(i)) for i in input]
+        if isinstance(input, str):
+            input = [input]
 
-            responses = []
-            for task in tqdm(asyncio.as_completed(tasks), total=len(input), desc="Embeddings", leave=False):
-                response = await task
-                responses.append(response.data[0].embedding)
-
-            return responses
-        
-        return asyncio.run(async_query(input))
+        with ThreadPoolExecutor(max_workers=self.max_concurrent_requests) as executor:
+            futures = [executor.submit(self.embed_query, i) for i in input]
+            results = []
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Embeddings", leave=False):
+                try:
+                    response = future.result()
+                    results.append(response.data[0].embedding)
+                except OpenAIError as e:
+                    self.logger.error(f"OpenAIError: {e}")
+                except Exception as e:
+                    self.logger.error(f"Unexpected error: {e}")
+        return results
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)
     async def embed_query(self, input: str) -> CreateEmbeddingResponse:
@@ -126,7 +125,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
             self.prompt_token_cost * prompt_tokens_k
         )
         self.logger.info(
-            f"This is the response from chatgpt: {response}"
-            f"\nThis is the cost of the response: {self.cost}"
+            #f"This is the response from chatgpt: {response}"
+            f"\nRESPONDED - This is the cost of the response: {self.prompt_token_cost * float(response.usage.prompt_tokens) / 1000.0}"
         )
         return response

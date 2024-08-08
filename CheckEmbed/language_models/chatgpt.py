@@ -12,12 +12,12 @@
 # modifications: Lorenzo Paleari
 
 
-import asyncio
 import backoff
 import os
 from typing import List, Dict, Union
 from openai import AsyncOpenAI, OpenAIError
 from openai.types.chat.chat_completion import ChatCompletion
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 from CheckEmbed.language_models import AbstractLanguageModel
@@ -71,6 +71,8 @@ class ChatGPT(AbstractLanguageModel):
 
         self.max_concurrent_requests = max_concurrent_requests
 
+        self.max_concurrent_requests = max_concurrent_requests
+
     # written by Lorenzo Paleari
     def load_model(self, device: str = None) -> None:
         """
@@ -102,28 +104,26 @@ class ChatGPT(AbstractLanguageModel):
         :return: Response(s) from the OpenAI model.
         :rtype: List[ChatCompletion]
         """
-        async def async_query() -> List[ChatCompletion]:
-            if self.cache and query in self.response_cache:
+        if self.cache and query in self.response_cache:
                 self.logger.debug(f"Used cache for query: {query}")
                 return self.response_cache[query]
-            
-            async def sem_task(semaphore, task):
-                async with semaphore:
-                    return await task
-
-            semaphore = asyncio.Semaphore(self.max_concurrent_requests)
-            tasks = [sem_task(semaphore, self.chat([{"role": "user", "content": query}], 1)) for _ in range(num_query)]
-            
-            responses = []
-            for task in tqdm(asyncio.as_completed(tasks), total=num_query, desc="Samples", leave=False):
-                response = await task
-                responses.append(response)
-
-            if self.cache:
-                self.response_cache[query] = response
-            return responses
         
-        return asyncio.run(async_query())
+        with ThreadPoolExecutor(max_workers=self.max_concurrent_requests) as executor:
+            futures = [executor.submit(self.chat([{"role": "user", "content": query}], 1)) for _ in range(num_query)]
+            results = []
+            for future in tqdm(as_completed(futures), total=num_query, desc="Samples", leave=False):
+                try:
+                    response = future.result()
+                    results.append(response)
+                except OpenAIError as e:
+                    self.logger.error(f"OpenAIError: {e}")
+                except Exception as e:
+                    self.logger.error(f"Unexpected error: {e}")
+        
+        if self.cache:
+            self.response_cache[query] = results
+        return results
+ 
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)
     async def chat(self, messages: List[Dict], num_responses: int = 1) -> ChatCompletion:
@@ -156,8 +156,8 @@ class ChatGPT(AbstractLanguageModel):
             + self.response_token_cost * completion_tokens_k
         )
         self.logger.info(
-            f"This is the response from chatgpt: {response}"
-            f"\nThis is the cost of the response: {self.cost}"
+            #f"This is the response from chatgpt: {response}"
+            f"\nThis is the cost of the response: {self.prompt_token_cost * float(response.usage.prompt_tokens) / 1000.0 + self.response_token_cost * float(response.usage.completion_tokens) / 1000.0}"
         )
         return response
 
