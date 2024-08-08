@@ -6,12 +6,14 @@
 #
 # main author: Lorenzo Paleari
 
+import asyncio
 import backoff
 import os
 from typing import List, Dict, Union
-from openai import OpenAI, OpenAIError
+from openai import AsyncOpenAI, OpenAIError
 from openai.types import CreateEmbeddingResponse
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from CheckEmbed.embedding_models import AbstractEmbeddingModel
 
@@ -24,7 +26,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
     """
 
     def __init__(
-        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False
+        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False, max_concurrent_requests: int = 10
     ) -> None:
         """
         Initialize the EmbeddingGPT instance with configuration, model details, and caching options.
@@ -35,6 +37,8 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         :type model_name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
+        :param max_concurrent_requests: The maximum number of concurrent requests. Defaults to 10.
+        :type max_concurrent_requests: int
         """
         super().__init__(config_path, model_name, cache)
         self.config: Dict = self.config[model_name]
@@ -52,7 +56,11 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         if self.api_key == "":
             self.logger.warning("OPENAI_API_KEY is not set")
         # Initialize the OpenAI Client
-        self.client = OpenAI(api_key=self.api_key, organization=self.organization)
+        self.client = AsyncOpenAI(api_key=self.api_key, organization=self.organization)
+
+        self.max_concurrent_requests = max_concurrent_requests
+
+        self.max_concurrent_requests = max_concurrent_requests
 
     def load_model(self, device: str = None) -> None:
         """
@@ -71,7 +79,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
 
     def generate_embedding(self, input: Union[List[str], str]) -> List[List[float]]:
         """
-        Abstract method to generate embedding for the given input text.
+        Generate embeddings for the given input text.
 
         :param input: The input texts to embed.
         :type input: Union[List[str], str]
@@ -81,13 +89,21 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         if isinstance(input, str):
             input = [input]
 
-        res = []
-        for i in tqdm(input, desc="samples", leave=False):
-            res.append(self.embed_query(i).data[0].embedding)
-        return res
+        with ThreadPoolExecutor(max_workers=self.max_concurrent_requests) as executor:
+            futures = [executor.submit(self.embed_query, i) for i in input]
+            results = []
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Embeddings", leave=False):
+                try:
+                    response = future.result()
+                    results.append(response.data[0].embedding)
+                except OpenAIError as e:
+                    self.logger.error(f"OpenAIError: {e}")
+                except Exception as e:
+                    self.logger.error(f"Unexpected error: {e}")
+        return results
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)
-    def embed_query(self, input: str) -> CreateEmbeddingResponse:
+    async def embed_query(self, input: str) -> CreateEmbeddingResponse:
         """
         Embed the given text into a vector.
 
@@ -96,7 +112,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         :return: The embedding of the text.
         :rtype: CreateEmbeddingResponse
         """
-        response = self.client.embeddings.create(
+        response = await self.client.embeddings.create(
             model=self.model_id,
             input=input,
             dimensions=self.dimension,
@@ -109,7 +125,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
             self.prompt_token_cost * prompt_tokens_k
         )
         self.logger.info(
-            f"This is the response from chatgpt: {response}"
-            f"\nThis is the cost of the response: {self.cost}"
+            #f"This is the response from chatgpt: {response}"
+            f"\nRESPONDED - This is the cost of the response: {self.prompt_token_cost * float(response.usage.prompt_tokens) / 1000.0}"
         )
         return response

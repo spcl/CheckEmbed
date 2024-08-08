@@ -11,11 +11,13 @@
 #
 # modifications: Lorenzo Paleari
 
+
 import backoff
 import os
 from typing import List, Dict, Union
-from openai import OpenAI, OpenAIError
+from openai import AsyncOpenAI, OpenAIError
 from openai.types.chat.chat_completion import ChatCompletion
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 from CheckEmbed.language_models import AbstractLanguageModel
@@ -30,17 +32,19 @@ class ChatGPT(AbstractLanguageModel):
 
     # modified by Lorenzo Paleari
     def __init__(
-        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False
+        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False, max_concurrent_requests: int = 10
     ) -> None:
         """
         Initialize the ChatGPT instance with configuration, model details, and caching options.
 
         :param config_path: Path to the configuration file. Defaults to "".
         :type config_path: str
-        :param model_name: Name of the model, default is 'chatgpt'. Used to select the correct configuration.
+        :param model_name: Name of the model, default is 'chatgpt4'. Used to select the correct configuration.
         :type model_name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
+        :param max_concurrent_requests: The maximum number of concurrent requests. Defaults to 10.
+        :type max_concurrent_requests: int
         """
         super().__init__(config_path, model_name, cache)
         self.config: Dict = self.config[model_name]
@@ -63,7 +67,11 @@ class ChatGPT(AbstractLanguageModel):
         if self.api_key == "":
             self.logger.warning("OPENAI_API_KEY is not set")
         # Initialize the OpenAI Client
-        self.client = OpenAI(api_key=self.api_key, organization=self.organization)
+        self.client = AsyncOpenAI(api_key=self.api_key, organization=self.organization)
+
+        self.max_concurrent_requests = max_concurrent_requests
+
+        self.max_concurrent_requests = max_concurrent_requests
 
     # written by Lorenzo Paleari
     def load_model(self, device: str = None) -> None:
@@ -97,20 +105,28 @@ class ChatGPT(AbstractLanguageModel):
         :rtype: List[ChatCompletion]
         """
         if self.cache and query in self.response_cache:
-            self.logger.debug(f"Used cache for query: {query}")
-            return self.response_cache[query]
+                self.logger.debug(f"Used cache for query: {query}")
+                return self.response_cache[query]
         
-        response = []
-        for _ in tqdm(range(num_query), desc="Samples", leave=False):
-            res = self.chat([{"role": "user", "content": query}], 1)
-            response.append(res)
-
+        with ThreadPoolExecutor(max_workers=self.max_concurrent_requests) as executor:
+            futures = [executor.submit(self.chat([{"role": "user", "content": query}], 1)) for _ in range(num_query)]
+            results = []
+            for future in tqdm(as_completed(futures), total=num_query, desc="Samples", leave=False):
+                try:
+                    response = future.result()
+                    results.append(response)
+                except OpenAIError as e:
+                    self.logger.error(f"OpenAIError: {e}")
+                except Exception as e:
+                    self.logger.error(f"Unexpected error: {e}")
+        
         if self.cache:
-            self.response_cache[query] = response
-        return response
+            self.response_cache[query] = results
+        return results
+ 
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)
-    def chat(self, messages: List[Dict], num_responses: int = 1) -> ChatCompletion:
+    async def chat(self, messages: List[Dict], num_responses: int = 1) -> ChatCompletion:
         """
         Send chat messages to the OpenAI model and retrieves the model's response.
         Implements backoff on OpenAI error.
@@ -122,7 +138,7 @@ class ChatGPT(AbstractLanguageModel):
         :return: The OpenAI model's response.
         :rtype: ChatCompletion
         """
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model_id,
             messages=messages,
             temperature=self.temperature,
@@ -140,8 +156,8 @@ class ChatGPT(AbstractLanguageModel):
             + self.response_token_cost * completion_tokens_k
         )
         self.logger.info(
-            f"This is the response from chatgpt: {response}"
-            f"\nThis is the cost of the response: {self.cost}"
+            #f"This is the response from chatgpt: {response}"
+            f"\nThis is the cost of the response: {self.prompt_token_cost * float(response.usage.prompt_tokens) / 1000.0 + self.response_token_cost * float(response.usage.completion_tokens) / 1000.0}"
         )
         return response
 
