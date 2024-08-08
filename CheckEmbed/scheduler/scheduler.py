@@ -310,6 +310,12 @@ class Scheduler:
                     with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
                         f.write(f"\t\t - LM {lm_names[index]}: {embedding_times[-1]} seconds\n")
 
+                end = timer() if time_performance else None
+                embedding_times.append(end - start if time_performance else None)
+                if time_performance:
+                    with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
+                        f.write(f"\t\t - LM {lm_names[index]}: {embedding_times[-1]} seconds\n")
+
                 if self.budget < 0:
                     break
             

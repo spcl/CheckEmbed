@@ -27,7 +27,7 @@ class CustomParser(Parser):
     Inherits from the Parser class and implements its abstract methods.
     """
 
-    def __init__(self, dataset_path: str, prompt_scheme_path: str) -> None:
+    def __init__(self, dataset_path: str, prompt_scheme_path: str, num_chunks: int) -> None:
         """
         Initialize the parser.
 
@@ -35,9 +35,12 @@ class CustomParser(Parser):
         :type dataset_path: str
         :param prompt_scheme_path: The path to the prompt scheme file.
         :type prompt_scheme_path: str
+        :param num_chunks: The number of chunks.
+        :type num_chunks: int
         """
         super().__init__(dataset_path)
         self.prompt_scheme_path = prompt_scheme_path
+        self.num_chunks = num_chunks
 
     def prompt_generation(self, custom_inputs: Any = None) -> List[str]:
         """
@@ -57,9 +60,6 @@ class CustomParser(Parser):
         for data in data_array:
             input_data.append(data['chunk_txt'])
 
-        # Removing the first element of the input_data array as it is used as an example in the prompt
-        input_data = input_data[1:]
-
         # Prompts generation
         prompt_complete = None
         with open(self.prompt_scheme_path) as f:
@@ -68,10 +68,14 @@ class CustomParser(Parser):
         prompt_initial = prompt_complete[0:prompt_complete.find('[###REPLACE WITH CONTEXT###]')]
         prompt_final = prompt_complete[prompt_complete.find('[###REPLACE WITH CONTEXT###]')+len('[###REPLACE WITH CONTEXT###]'):]
 
+        start_index = 0
+        if self.num_chunks == 1:
+            start_index = 1
+
         # Use the input data as context inside the prompts
         prompts = []
-        for data in input_data:
-            prompts.append(prompt_initial + data + prompt_final)
+        for i in range(start_index, len(input_data) - self.num_chunks + 1):
+            prompts.append(prompt_initial + "".join(input_data[i:i+self.num_chunks]) + prompt_final)
 
         return prompts
 
@@ -88,7 +92,7 @@ class CustomParser(Parser):
         with open(self.dataset_path) as f:
             json_data = json.load(f)
 
-        data_array = json_data['data'][1:]
+        data_array = json_data['data']
         for data in data_array:
             text = ""
             for definition in data['definitions']:
@@ -96,108 +100,142 @@ class CustomParser(Parser):
 
             text = text[:-1]
             ground_truth.append(text)
+
+        start_index = 0
+        if self.num_chunks == 1:
+            start_index = 1
+
+        composite_ground_truth = []
+        for i in range(start_index, len(ground_truth) - self.num_chunks + 1):
+            composite_ground_truth.append("\n".join(ground_truth[i:i+self.num_chunks]))
         
-        return ground_truth
+        return composite_ground_truth
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
+def start(current_dir: str, num_chunks: int = 1, start: int = StartingPoint.PROMPT) -> None:
+    """
+    Start the main function.
 
-# Config file for the LLM(s)
-config_path = os.path.join(
-        current_dir,
-        "../../CheckEmbed/config.json",
+    :param current_dir: The current directory.
+    :type current_dir: str
+    :param num_chunks: The number of chunks. Defaults to 1.
+    :type num_chunks: int
+    :param start: The starting point. Defaults to StartingPoint.PROMPT.
+    :type start: StartingPoint
+    """
+
+    # Config file for the LLM(s)
+    config_path = os.path.join(
+            current_dir,
+            "../../../CheckEmbed/config.json",
+        )
+
+    # Initialize the parser and the embedder
+    customParser = CustomParser("./dataset/legal_definitions.json", os.path.join(current_dir, "../prompt_scheme.txt"), num_chunks=num_chunks)
+
+    # Initialize the language models
+    gpt3 = language_models.ChatGPT(
+        config_path,
+        model_name = "chatgpt",
+        cache = True,
+    ) 
+
+    gpt4 = language_models.ChatGPT(
+        config_path,
+        model_name = "chatgpt4-turbo",
+        cache = True,
     )
 
-# Initialize the parser and the embedder
-customParser = CustomParser("dataset/legal_definitions.json", os.path.join(current_dir, "prompt_scheme.txt"))
+    gpt4_o = language_models.ChatGPT(
+        config_path,
+        model_name = "chatgpt4-o",
+        cache = True,
+    )
 
-# Initialize the language models
-gpt3 = language_models.ChatGPT(
-    config_path,
-    model_name = "chatgpt",
-    cache = True,
-) 
+    embedd_large = embedding_models.EmbeddingGPT(
+        config_path,
+        model_name = "gpt-embedding-large",
+        cache = False,
+    )
 
-gpt4 = language_models.ChatGPT(
-    config_path,
-    model_name = "chatgpt4-turbo",
-    cache = True,
-)
+    sfrEmbeddingMistral = embedding_models.SFREmbeddingMistral(
+        config_path,
+        model_name = "Salesforce/SFR-Embedding-Mistral",
+        cache = False,
+    )
 
-gpt4_o = language_models.ChatGPT(
-    config_path,
-    model_name = "chatgpt4-o",
-    cache = True,
-)
+    e5mistral7b = embedding_models.E5Mistral7b(
+        config_path,
+        model_name = "intfloat/e5-mistral-7b-instruct",
+        cache = False,
+    )
 
-embedd_large = embedding_models.EmbeddingGPT(
-    config_path,
-    model_name = "gpt-embedding-large",
-    cache = False,
-)
+    gteQwen157bInstruct = embedding_models.GteQwenInstruct(
+        config_path=config_path,
+        model_name = "Alibaba-NLP/gte-Qwen1.5-7B-instruct",
+        cache = False,
+        access_token = "", # Add your access token here
+        batch_size=4, # it may be necessary to reduce the batch size if the GPU VRAM < 40GB
+    )
 
-sfrEmbeddingMistral = embedding_models.SFREmbeddingMistral(
-    config_path,
-    model_name = "Salesforce/SFR-Embedding-Mistral",
-    cache = False,
-)
+    # Initialize the plot operations
+    bertPlot = BertPlot(
+        os.path.join(current_dir, "plots", "BertScore"),
+        os.path.join(current_dir, "BertScore"),
+    )
 
-e5mistral7b = embedding_models.E5Mistral7b(
-    config_path,
-    model_name = "intfloat/e5-mistral-7b-instruct",
-    cache = False,
-)
+    selfCheckGPTPlot = SelfCheckGPTPlot(
+        os.path.join(current_dir, "plots", "SelfCheckGPT"),
+        os.path.join(current_dir, "SelfCheckGPT"),
+    )
 
-gteQwen157bInstruct = embedding_models.GteQwenInstruct(
-    config_path=config_path,
-    model_name = "Alibaba-NLP/gte-Qwen1.5-7B-instruct",
-    cache = False,
-    access_token = "", # Add your access token here
-    batch_size = 1,
-)
+    rawEmbeddingHeatPlot = RawEmbeddingHeatPlot(
+        os.path.join(current_dir, "plots", "CheckEmbed"),
+        os.path.join(current_dir, "embeddings"),
+    )
 
-# Initialize the plot operations
-bertPlot = BertPlot(
-    os.path.join(current_dir, "plots", "BertScore"),
-    os.path.join(current_dir, "BertScore"),
-)
+    checkEmbedPlot = CheckEmbedPlot(
+        os.path.join(current_dir, "plots", "CheckEmbed"),
+        os.path.join(current_dir, "CheckEmbed"),
+    )
 
-selfCheckGPTPlot = SelfCheckGPTPlot(
-    os.path.join(current_dir, "plots", "SelfCheckGPT"),
-    os.path.join(current_dir, "SelfCheckGPT"),
-)
+    # Initialize the scheduler
+    scheduler = Scheduler(
+        current_dir,
+        logging_level = logging.DEBUG,
+        budget = 30,
+        parser = customParser,
+        lm = [gpt4_o, gpt4, gpt3],
+        embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct],
+        operations = [bertPlot, selfCheckGPTPlot, rawEmbeddingHeatPlot, checkEmbedPlot],
+    )
 
-rawEmbeddingHeatPlot = RawEmbeddingHeatPlot(
-    os.path.join(current_dir, "plots", "CheckEmbed"),
-    os.path.join(current_dir, "embeddings"),
-)
+    # The order of lm_names and embedding_lm_names should be the same
+    # as the order of the language models and embedding language models respectively.
+    scheduler.run(
+        startingPoint = start,
+        bertScore = False, 
+        selfCheckGPT = False,
+        ground_truth = True, 
+        num_samples = 10, 
+        lm_names = ["gpt4-o", "gpt4-turbo", "gpt"],
+        embedding_lm_names = ["gpt-embedding-large", "sfr-embedding-mistral", "e5-mistral-7b-instruct", "gte-Qwen15-7B-instruct"],
+        bertScore_model = "microsoft/deberta-xlarge-mnli",
+        batch_size = 64, # it may be necessary to reduce the batch size if the model is too large
+        device = "cuda" # or "cpu" "mps" ...
+    )
 
-checkEmbedPlot = CheckEmbedPlot(
-    os.path.join(current_dir, "plots", "CheckEmbed"),
-    os.path.join(current_dir, "CheckEmbed"),
-)
+if __name__ == "__main__":
+    current_dir = os.path.dirname(os.path.abspath(__file__)) + "/chunk_dim_1"
+    if not os.path.exists(current_dir):
+        os.makedirs(current_dir)
+    start(current_dir, num_chunks=1, start=StartingPoint.PROMPT)
 
-# Initialize the scheduler
-scheduler = Scheduler(
-    current_dir,
-    logging_level = logging.DEBUG,
-    budget = 12,
-    parser = customParser,
-    lm = [gpt4_o, gpt4, gpt3],
-    embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct],
-    operations = [bertPlot, selfCheckGPTPlot, rawEmbeddingHeatPlot, checkEmbedPlot],
-)
+    current_dir = os.path.dirname(os.path.abspath(__file__)) + "/chunk_dim_2"
+    if not os.path.exists(current_dir):
+        os.makedirs(current_dir)
+    start(current_dir, num_chunks=2, start=StartingPoint.PROMPT)
 
-# The order of lm_names and embedding_lm_names should be the same
-# as the order of the language models and embedding language models respectively.
-scheduler.run(
-    startingPoint = StartingPoint.PROMPT,
-    bertScore = True, 
-    selfCheckGPT = True,
-    ground_truth = True, 
-    num_samples = 10, 
-    lm_names = ["gpt4-o", "gpt4-turbo", "gpt"],
-    embedding_lm_names = ["gpt-embedding-large", "sfr-embedding-mistral", "e5-mistral-7b-instruct", "gte-Qwen15-7B-instruct"],
-    bertScore_model = "microsoft/deberta-xlarge-mnli",
-    batch_size = 64, # it may be necessary to reduce the batch size if the model is too large
-    device = "cuda" # or "cpu" "mps" ...
-)
+    current_dir = os.path.dirname(os.path.abspath(__file__)) + "/chunk_dim_4"
+    if not os.path.exists(current_dir):
+        os.makedirs(current_dir)
+    start(current_dir, num_chunks=4, start=StartingPoint.PROMPT)
