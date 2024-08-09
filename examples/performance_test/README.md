@@ -1,14 +1,15 @@
 # Performance Testing
 
-This directory contains scripts and configurations to evaluate the performance of CheckEmbed on various embedding models in comparison to SelfCheckGPT and BERTScore.
-The script generates text samples and analyzes the performance while varying the text size, i.e. the number of tokens in the text, and the number of samples.
+This directory contains scripts and configurations to evaluate the performance, specifically the runtime, of CheckEmbed on various embedding models in comparison to SelfCheckGPT and BERTScore.
+The script generates input text for each datapoint while varying the sizes of these texts, , i.e. the number of tokens in the text, as well as the number of samples and measure the runtime performance.
+For the performance evaluation, the samples of a datapoint are all generated locally by a script instead of querying an LLM.
 Varying the number of tokens to embed gives insights on the overall efficiency of the different embedding models used by CheckEmbed, SelfCheckGPT and BERTScore, while varying the sample number examines the the scalability of the respective pipelines.
 
 By default, the script tests multiple text sizes, ranging from 200 to 4000 tokens in steps of 200, as well as different number of samples (2, 4, 6, 8 and 10).
 
 ## Data
 
-The dataset used to generate text samples is created using the `Faker` library. Samples of varying lengths are generated and saved in a JSON format in directories (`2_samples`, `4_samples`, etc.) corresponding to the number of samples..
+The dataset used to generate text samples is created using the `Faker` library. Samples of varying lengths are generated and saved in a JSON format in directories (`2_samples`, `4_samples`, etc.) corresponding to the number of samples.
 
 Once desired evaluation is finished, `data_extractor.py` can be used (and/or modified) to parse the runtime logs and create a single JSON file, which contains all runtime measurements.
 ```python
@@ -17,9 +18,10 @@ python3 data_extractor.py
 
 ## Runtime / Cost Estimation
 
-The estimated compute time for running the evaluation with a specific number of samples is approximately 5-8 hours on an NVIDIA A100-SXM-40GB.
+The estimated compute time for running the evaluation is approximately 24 hours on an NVIDIA A100-SXM-40GB.
 
-Experiments skip the sample phase resulting in lower cost deriving from the API calls to OpenAI text-embedding-large.
+The sample step is only emulated for these runtime measurements to avoid the cost of calling the LLM for the sampling, so cost only occur for the embedding with the OpenAI models.
+
 The embedding model from OpenAI has a cost of $0.13 / 1M tokens.
 
 ### Example
