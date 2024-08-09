@@ -16,6 +16,40 @@ Once the evaluation is finished, `data_extractor.py` can be used (and/or modifie
 python3 data_extractor.py
 ```
 
+The extracted JSON file has the following general structure:
+```json
+{
+  "#_samples": {   //2_samples, 4_saples...
+    "embedding": {
+      "embedding_model_name": {   //gpt-embedding-large, sfr-embedding-mistral...
+        "#tokens": 14.2343423422434, //200: time
+        "#tokens": 234.325232353233,
+        //...
+      },
+      //more embeddings...
+    },
+    "bertscore": {
+      "#tokens": 34.4546456464345,
+      //...
+    },
+    "selfcheckgpt": {
+      "#tokens": 34.4546456464345,
+      //...
+    },
+    "checkembed": {
+      "embedding_model_name": {   //gpt-embedding-large, sfr-embedding-mistral...
+        "#tokens": 14.2343423422434, //200: time
+        "#tokens": 234.325232353233,
+        //...
+      },
+      //more embeddings...
+    },
+    "operations":  {} //To customize.
+  },
+  //other # of samples ...
+} 
+```
+
 ## Runtime / Cost Estimation
 
 The estimated compute time for running the evaluation is approximately 24 hours on an NVIDIA A100-SXM-40GB.
