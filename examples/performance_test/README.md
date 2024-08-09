@@ -1,17 +1,17 @@
 # Performance Testing
 
 This directory contains scripts and configurations to evaluate the performance, specifically the runtime, of CheckEmbed on various embedding models in comparison to SelfCheckGPT and BERTScore.
-The script generates input text for each datapoint while varying the sizes of these texts, , i.e. the number of tokens in the text, as well as the number of samples and measure the runtime performance.
-For the performance evaluation, the samples of a datapoint are all generated locally by a script instead of querying an LLM.
+The script generates input text for each datapoint while varying the sizes of these texts, i.e. the number of tokens in the text, as well as the number of samples for each datapoint and measures the runtime performance of the embedding and the operations.
+The samples of a datapoint are all generated locally via script instead of querying an LLM.
 Varying the number of tokens to embed gives insights on the overall efficiency of the different embedding models used by CheckEmbed, SelfCheckGPT and BERTScore, while varying the sample number examines the the scalability of the respective pipelines.
 
 By default, the script tests multiple text sizes, ranging from 200 to 4000 tokens in steps of 200, as well as different number of samples (2, 4, 6, 8 and 10).
 
 ## Data
 
-The dataset used to generate text samples is created using the `Faker` library. Samples of varying lengths are generated and saved in a JSON format in directories (`2_samples`, `4_samples`, etc.) corresponding to the number of samples.
+The dataset with the generated text samples is created using the `Faker` library. Samples of varying lengths are generated and stored in a JSON format in directories (`2_samples`, `4_samples`, etc.) corresponding to the number of samples.
 
-Once desired evaluation is finished, `data_extractor.py` can be used (and/or modified) to parse the runtime logs and create a single JSON file, which contains all runtime measurements.
+Once the evaluation is finished, `data_extractor.py` can be used (and/or modified) to aggregate the runtime logs and write the results into a single JSON file containing all runtime measurements.
 ```python
 python3 data_extractor.py
 ```
