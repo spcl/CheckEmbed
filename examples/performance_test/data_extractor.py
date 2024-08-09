@@ -1,3 +1,11 @@
+# Copyright (c) 2024 ETH Zurich.
+#                    All rights reserved.
+#
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# main author: Lorenzo Paleari
+
 import os
 import json
 import re
@@ -7,6 +15,16 @@ from typing import List, Dict, Tuple
 steps = ["Embedding generation", "BERTScore operation", "SelfCheckGPT operation", "CheckEmbed operation", "Operations"]
 
 def extract_embeddings(lines: List[str], i: int) -> Tuple[Dict[str, Dict[str, float]], int]:
+    """
+    Extract the runtimes for the embedding generation.
+
+    :param lines: Lines of the input files.
+    :type lines:  List[str]
+    :param i: Index of the lines that are already processed.
+    :type i: int
+    :return: Tuple of the extracted runtimes and the index of the already processed lines.
+    :rtype: Tuple[Dict[str, Dict[str, float]], int]
+    """
     embeddings = {}
     emb_pattern = r"(?<=Embedding model: )\S+"
     runtime_pattern = r"LM (\S+): ([\d.]+) seconds"
@@ -28,12 +46,21 @@ def extract_embeddings(lines: List[str], i: int) -> Tuple[Dict[str, Dict[str, fl
 
     print("Embeddings extracted successfully!")
     
-    # DEBUG
-    # print(embeddings)
-
     return embeddings, i
 
+
 def extract_bertscore(lines: List[str], i: int) -> Tuple[Dict[str, float], int]:
+    """
+    Extract the runtimes for the BERTScore operation.
+
+    :param lines: Lines of the input files.
+    :type lines:  List[str]
+    :param i: Index of the lines that are already processed.
+    :type i: int
+    :return: Tuple of the extracted runtimes and the index of the already processed lines.
+    :rtype: Tuple[Dict[str, float], int]
+    """
+
     bertscore = {}
     runtime_pattern = r"- Time for (\S+): ([\d.]+)"
 
@@ -47,12 +74,21 @@ def extract_bertscore(lines: List[str], i: int) -> Tuple[Dict[str, float], int]:
 
     print("BERTScore extracted successfully!")
 
-    # DEBUG
-    # print(bertscore)
-
     return bertscore, i
 
+
 def extract_selfcheckgpt(lines: List[str], i: int) -> Tuple[Dict[str, float], int]:
+    """
+    Extract the runtimes for the SelfCheckGPT operation.
+
+    :param lines: Lines of the input files.
+    :type lines:  List[str]
+    :param i: Index of the lines that are already processed.
+    :type i: int
+    :return: Tuple of the extracted runtimes and the index of the already processed lines.
+    :rtype: Tuple[Dict[str, float], int]
+    """
+
     selfcheckgpt = {}
     runtime_pattern = r"- Time for (\S+): ([\d.]+)"
 
@@ -66,12 +102,21 @@ def extract_selfcheckgpt(lines: List[str], i: int) -> Tuple[Dict[str, float], in
 
     print("SelfCheckGPT extracted successfully!")
 
-    # DEBUG
-    # print(selfcheckgpt)
-
     return selfcheckgpt, i
 
+
 def extract_checkembed(lines: List[str], i: int) -> Tuple[Dict[str, Dict[str, float]], int]:
+    """
+    Extract the runtimes for the CheckEmbed operation.
+
+    :param lines: Lines of the input files.
+    :type lines:  List[str]
+    :param i: Index of the lines that are already processed.
+    :type i: int
+    :return: Tuple of the extracted runtimes and the index of the already processed lines.
+    :rtype: Tuple[Dict[str, Dict[str, float]], int]
+    """
+
     checkembed = {}
     runtime_pattern = r"- Time for (\S+)\s+(\S+): ([\d.]+)"
 
@@ -85,7 +130,6 @@ def extract_checkembed(lines: List[str], i: int) -> Tuple[Dict[str, Dict[str, fl
                 checkembed[search_res.group(2)] = {search_res.group(1): float(search_res.group(3))}
 
         i += 1
-
 
     def custom_sort_key(item):
         key, _ = item
@@ -102,14 +146,23 @@ def extract_checkembed(lines: List[str], i: int) -> Tuple[Dict[str, Dict[str, fl
 
     print("CheckEmbed extracted successfully!")
 
-    # DEBUG
-    # print(checkembed)
-
     return checkembed, i
 
 def extract_operation(lines: List[str], i: int) -> Tuple[Dict[str, float], int]:
-    # Cutomize to your needs
+    """
+    Generic function interface to extract the runtimes of an operation.
+
+    Customize to your needs.
+
+    :param lines: Lines of the input files.
+    :type lines:  List[str]
+    :param i: Index of the lines that are already processed.
+    :type i: int
+    :return: Tuple of the extracted runtimes and the index of the already processed lines.
+    :rtype: Tuple[Dict[str, float], int]
+    """
     return {}, i+1
+
 
 def extract(
         samples: List[str],
@@ -118,6 +171,20 @@ def extract(
         result_dir: str, 
         result_file_name: str
     ) -> None:
+    """
+    Extract the runtimes from the files of the different sample sizes.
+
+    :param samples: List of names of the sample size directories.
+    :type samples: List[str]
+    :param runtime_dir: Path to the runtime directory, the input directory.
+    :type runtime_dir: str
+    :param runtime_file_name: Name of the input files.
+    :type runtime_file_name: str
+    :param result_dir: Path to the output directory.
+    :type result_dir: str
+    :param result_file_name: Name of the output file.
+    :type result_file_name: str
+    """
 
     complete_results = {}
     for sample in samples:
@@ -147,7 +214,6 @@ def extract(
         json.dump(complete_results, f, indent=4)
     
     print("Results extracted successfully!")
-
 
 
 if __name__ == "__main__":

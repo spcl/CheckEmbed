@@ -8,9 +8,9 @@ By default, the script tests multiple text sizes, ranging from 200 to 4000 token
 
 ## Data
 
-The dataset used to generate text samples is created using the `Faker` library. Samples of varying lengths are generated and saved in a JSON format in corresponding directories (`2_samples`, `4_samples`, etc.).
+The dataset used to generate text samples is created using the `Faker` library. Samples of varying lengths are generated and saved in a JSON format in directories (`2_samples`, `4_samples`, etc.) corresponding to the number of samples..
 
-Once desired evaluation is finished, `data_extractor.py` can be used (and/or modified) to parse the runtime logs and create a single JSON file.
+Once desired evaluation is finished, `data_extractor.py` can be used (and/or modified) to parse the runtime logs and create a single JSON file, which contains all runtime measurements.
 ```python
 python3 data_extractor.py
 ```
@@ -23,13 +23,17 @@ Experiments skip the sample phase resulting in lower cost deriving from the API 
 The embedding model from OpenAI has a cost of $0.13 / 1M tokens.
 
 ### Example
-Considering the default behaviour of testing from 2 to 10 samples with everyone using from 200 to 4000 tokens and 20 prompts the total cost is going to be:
-- Samples for every token dimension: $(2 + 4 + 6 + 8 + 10) * 20 = 30 * 20 = 600$
-- Total Number of Tokens:
-    - 200 tokens: $200 * 600 = 120k$
-    - 400 tokens: $400 * 600 = 240k$
-    - ...
-    ---
-    - 25kk tokens
+In the following, we calculate the total cost for running the runtime measurements with the default parameters:
+- varying the number of samples from 2 to 10 in increments of 2
+- varying the text size from 200 to 4000 tokens in steps of 200 tokens
+- 20 prompts, meaning 20 datapoints for each specific combination of number of samples and number of tokens
 
-Total cost: $4.00
+The total costs are $3.28:
+- total number of samples per text size: (2 + 4 + 6 + 8 + 10) * 20 = 30 * 20 = 600
+- total number of tokens:
+  - 200 tokens: 200 * 600 = 120K
+  - 400 tokens: 400 * 600 = 240K
+  - ...
+  ---
+  - 25.2M tokens
+- 25.2M tokens * $0.13 / 1M tokens = $3.28

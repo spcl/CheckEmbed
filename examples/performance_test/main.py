@@ -20,7 +20,7 @@ from CheckEmbed.scheduler import Scheduler, StartingPoint
 
 def start(current_dir: str, start: int = StartingPoint.PROMPT, n_samples: int = 10) -> None:
     """
-    Execute the different description use case.
+    Execute the runtime measurements.
 
     :param current_dir: Directory path from the the script is called.
     :type current_dir: str
@@ -86,7 +86,20 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, n_samples: int = 
         batch_size = 64 # it may be necessary to reduce the batch size if the model is too large
     )
 
-def text_gen(n_prompt: int = 50, n_samples: int = 10, dir: str = "."):
+
+def text_gen(n_prompt: int = 50, n_samples: int = 10, dir: str = ".") -> None:
+    """
+    Generate text with different number of tokens for a specific number of samples.
+
+    :param n_prompt: Number of datapoints for a specific combination of token size and number of
+                     samples. Defaults to 50.
+    :type n_prompt: int
+    :param n_samples: Number of samples. Default to 10.
+    :type n_samples: int
+    :param dir: Path to the output directory. Defaults to the current directory.
+    :type dir: str
+    """
+
     fake = Faker()
     fake.seed_instance(int(random.Random(time.now().microsecond).random() * 1000))
 
@@ -113,6 +126,7 @@ def text_gen(n_prompt: int = 50, n_samples: int = 10, dir: str = "."):
         with open(f"{dir}/{length}_samples.json", "w") as f:
             json_data = [{"index": i, "samples": samples} for i, samples in enumerate(len_samples)]
             json.dump({"data": json_data}, f, indent=4)
+
 
 if __name__ == "__main__":
     print("Performance test\n")
