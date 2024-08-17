@@ -132,7 +132,7 @@ if __name__ == "__main__":
     input_file = "runtimes_results.json"
     folders = ["2_samples", "4_samples", "6_samples", "8_samples", "10_samples"] # To modify if the number of samples changes
 
-    methods = ["scgpt", "ce"] # To modify if less or more methods are used
+    methods = ["bert", "scgpt", "ce"] # To modify if less or more methods are used
     # BERTScore, SelfCheckGPT, CheckEmbed (in order)
 
     embedding_models = ["gpt", "sfr", "e5", "gte"] # To modify if less or more embedding models are used
