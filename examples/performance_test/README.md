@@ -16,38 +16,44 @@ Once the evaluation is finished, `data_extractor.py` can be used (and/or modifie
 python3 data_extractor.py
 ```
 
-The extracted JSON file has the following general structure:
+The extracted JSON file has the following structure in general:
 ```json
 {
-  "#_samples": {   //2_samples, 4_saples...
+  "#_samples": {   //2_samples, 4_samples...
     "embedding": {
       "embedding_model_name": {   //gpt-embedding-large, sfr-embedding-mistral...
-        "#tokens": 14.2343423422434, //200: time
-        "#tokens": 234.325232353233,
+        "#tokens": "time",
+        "#tokens": "time",
         //...
       },
       //more embeddings...
     },
     "bertscore": {
-      "#tokens": 34.4546456464345,
+      "#tokens": "time",
       //...
     },
     "selfcheckgpt": {
-      "#tokens": 34.4546456464345,
+      "#tokens": "time",
       //...
     },
     "checkembed": {
       "embedding_model_name": {   //gpt-embedding-large, sfr-embedding-mistral...
-        "#tokens": 14.2343423422434, //200: time
-        "#tokens": 234.325232353233,
+        "#tokens": "time",
+        "#tokens": "time",
         //...
       },
       //more embeddings...
     },
     "operations":  {} //To customize.
   },
-  //other # of samples ...
+  //additional number of samples...
 } 
+```
+The runtime is reported in seconds.
+
+The extracted data can be visualized with the help of the provided plotting script:
+```python
+python3 plot.py
 ```
 
 ## Runtime / Cost Estimation

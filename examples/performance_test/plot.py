@@ -76,7 +76,7 @@ def read_runtimes(filename: str, folders: List[str], methods: List[str], embeddi
 
 def plot_performance(filename: str, folders: List[str], methods: List[str], embedding_models: List[str]) -> None:
     """
-    Plot the runtimes of the different models and methods varying the number of samples and the lenght of the text.
+    Plot the runtimes of the different models and methods while varying the number of samples and the length of the text.
 
     :param filename: The name of the file containing the runtimes.
     :type filename: str
@@ -130,12 +130,16 @@ def plot_performance(filename: str, folders: List[str], methods: List[str], embe
 
 if __name__ == "__main__":
     input_file = "runtimes_results.json"
-    folders = ["2_samples", "4_samples", "6_samples", "8_samples", "10_samples"] # To modify if the number of samples changes
+    # Modify to the used sample numbers
+    # The names should correspond to the folders, where the results for a given sample numbers were stored.
+    folders = ["2_samples", "4_samples", "6_samples", "8_samples", "10_samples"]
 
-    methods = ["bert", "scgpt", "ce"] # To modify if less or more methods are used
+    # Modify to add or remove methods
     # BERTScore, SelfCheckGPT, CheckEmbed (in order)
+    methods = ["bert", "scgpt", "ce"]
 
-    embedding_models = ["gpt", "sfr", "e5", "gte"] # To modify if less or more embedding models are used
+    # Modify to add or remove embedding models
     # text-embedding-large, sfr-embedding-mistral, e5-mistral-7b-instruct, gte-Qwen15-7B-instruct (in order)
+    embedding_models = ["gpt", "sfr", "e5", "gte"]
 
     plot_performance(input_file, folders, methods, embedding_models)
