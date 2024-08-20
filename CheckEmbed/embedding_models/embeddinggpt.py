@@ -60,8 +60,6 @@ class EmbeddingGPT(AbstractEmbeddingModel):
 
         self.max_concurrent_requests = max_concurrent_requests
 
-        self.max_concurrent_requests = max_concurrent_requests
-
     def load_model(self, device: str = None) -> None:
         """
         Load the embedding model locally.
