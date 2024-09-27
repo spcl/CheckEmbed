@@ -141,7 +141,7 @@ class SelfCheckGPTOperation_Variant(Operation):
         self.ground_truth_dir = ground_truth_dir
         self.sample_dir_path = sample_dir_path
 
-    def execute(self, custom_inputs: Any) -> Any:
+    def execute(self, custom_inputs: Any) -> None:
         """
         Execute the operation on the embeddings/samples.
 

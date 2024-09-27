@@ -44,7 +44,7 @@ The extracted JSON file has the following structure in general:
       },
       //more embeddings...
     },
-    "operations":  {} //To customize.
+    "operations": {} //To customize.
   },
   //additional number of samples...
 } 

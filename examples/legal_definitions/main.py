@@ -120,7 +120,7 @@ def start(current_dir: str, num_chunks: int = 1, start: int = StartingPoint.PROM
     :param num_chunks: The number of chunks. Defaults to 1.
     :type num_chunks: int
     :param start: The starting point. Defaults to StartingPoint.PROMPT.
-    :type start: StartingPoint
+    :type start: int
     """
 
     # Config file for the LLM(s)

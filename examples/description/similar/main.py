@@ -197,14 +197,14 @@ class CustomParser(Parser):
 
     def answer_parser(self, responses: List[List[str]], custom_inputs: Any = None) -> Any:
         """
-        parse the responses from the model.
+        Parse the responses from the model.
 
-        :param responses: the responses from the model.
-        :type responses: list[list[str]]
-        :param custom_inputs: the custom inputs to the parser. defaults to none.
-        :type custom_inputs: any
-        :return: the parsed responses.
-        :rtype: list[list[str]]
+        :param responses: The responses from the model.
+        :type responses: List[List[str]]
+        :param custom_inputs: The custom inputs to the parser. Defaults to None.
+        :type custom_inputs: Any
+        :return: The parsed responses.
+        :rtype: Any
         """
         new_responses = []
         for response in responses:

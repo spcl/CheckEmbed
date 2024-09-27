@@ -2,7 +2,7 @@
 
 The use case in this directory extracts terms and their definitions from legal documents. It is based on an in-house legal analytics project.
 
-We use this example also for an ablation study by varying the the chunk sizes that are processed in a single step.
+We use this example also for an ablation study by varying the chunk sizes that are processed in a single step.
 An increase in chunk size means that more terms and their definitions need to be extracted at a time.
 The general assumption is that the LLM will perform worse if the processed document size increases, which should be reflected in the resulting CheckEmbed scores.
 If you wish the run the original use case with a single chunk size, please comment out the lines 233 to 241 in `main.py`.
