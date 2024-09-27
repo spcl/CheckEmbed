@@ -1,6 +1,6 @@
 # Distinguishing Similar and Different Text Passages
 
-The use case in this directory analyzises, whether a verification method is able to clearly distinguish two passages of text that either look
+The use case in this directory analyzes, whether a verification method is able to clearly distinguish two passages of text that either look
 similar, but come with very different meanings ("different") or look different, but have similar or identical meanings ("similar").
 
 ## Data

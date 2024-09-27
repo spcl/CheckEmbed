@@ -11,17 +11,16 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
-def read_json_file(filename: str) -> any:
+def read_json_file(filename: str) -> Any:
     """
     Read the content of a JSON file.
 
     :param filename: The name of the file.
     :type filename: str
-
     :return: The content of the file.
-    :rtype: any
+    :rtype: Any
     """
 
     file = open(filename, "r")
@@ -36,14 +35,13 @@ def read_runtimes(filename: str, folders: List[str], methods: List[str], embeddi
     :param filename: The name of the file containing the runtimes.
     :type filename: str
     :param folders: The folders containing the runtimes.
-    :type folders: list[str]
+    :type folders: List[str]
     :param methods: The methods used.
-    :type methods: list[str]
+    :type methods: List[str]
     :param embedding_models: The embedding models used.
-    :type embedding_models: list[str]
-
+    :type embedding_models: List[str]
     :return: The runtimes.
-    :rtype: dict[str, dict[str, dict[str, dict[str, list[float]]]]]
+    :rtype: Dict[str, Dict[str, Dict[str, Dict[str, List[float]]]]]
     """
 
     content = read_json_file(os.path.join(os.path.abspath(os.path.dirname(__file__)), filename))
@@ -68,10 +66,6 @@ def read_runtimes(filename: str, folders: List[str], methods: List[str], embeddi
                     data[method][folder][method_label]["labels"] = []
                     data[method][folder][method_label]["values"] = []
 
-    #DEBUG
-    # with open("runtimes_results_final.json", "w") as f:
-    #     json.dump(data, f, indent=4)
-
     return data
 
 def plot_performance(filename: str, folders: List[str], methods: List[str], embedding_models: List[str]) -> None:
@@ -81,11 +75,11 @@ def plot_performance(filename: str, folders: List[str], methods: List[str], embe
     :param filename: The name of the file containing the runtimes.
     :type filename: str
     :param folders: The folders containing the runtimes.
-    :type folders: list[str]
+    :type folders: List[str]
     :param methods: The methods used.
-    :type methods: list[str]
+    :type methods: List[str]
     :param embedding_models: The embedding models used.
-    :type embedding_models: list[str]
+    :type embedding_models: List[str]
     """
     method_labels = {"bert" : "BERTScore", "scgpt" : "SelfCheckGPT", "ce" : "CheckEmbed", "ce_gpt" : "CheckEmbed (GPT)", "ce_sfr" : "CheckEmbed (SFR)", "ce_e5" : "CheckEmbed (E5)", "ce_gte" : "CheckEmbed (GTE)"}
     colors = {"bert" : "#999900", "scgpt" : "#990099", "ce_gpt" : "#0000FF", "ce_sfr" : "#FF0000", "ce_e5" : "#00FF00", "ce_gte" : "#9900FF"}
