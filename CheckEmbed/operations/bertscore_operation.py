@@ -59,7 +59,7 @@ class BertScoreOperation(Operation):
 
         if time_performance:
             with open(os.path.join(self.sample_dir_path, "runtimes", "performance_log.log"), "a") as f:
-                f.write(f"\n\nBERTScore operation\n")
+                f.write("\n\nBERTScore operation\n")
 
         # Run BertScore for every pair of language model and samples
         performance_times = []
@@ -129,10 +129,10 @@ class BertScoreOperation(Operation):
                             temp_res[i][j] = result[i][j]
                 results[index] = temp_res
 
-            frobenius_norms = [frobenius_norm_no_diag(result[:-1,:-1]) if custom_inputs["ground_truth"]
-                                    else frobenius_norm_no_diag(result) for result in results]
+            frobenius_norms = [frobenius_norm_no_diag(result[:-1,:-1], True) if custom_inputs["ground_truth"]
+                                    else frobenius_norm_no_diag(result, True) for result in results]
             std_devs = [matrix_std_dev_no_diag(result[:-1,:-1]) if custom_inputs["ground_truth"] 
-                            else frobenius_norm_no_diag(result) for result in results]
+                            else matrix_std_dev_no_diag(result) for result in results]
             
             end = timer() if time_performance else None
             if time_performance:
