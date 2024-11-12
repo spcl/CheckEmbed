@@ -15,7 +15,7 @@
 import backoff
 import os
 from typing import List, Dict, Union
-from openai import AsyncOpenAI, OpenAIError
+from openai import OpenAI, OpenAIError
 from openai.types.chat.chat_completion import ChatCompletion
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
@@ -67,7 +67,7 @@ class ChatGPT(AbstractLanguageModel):
         if self.api_key == "":
             self.logger.warning("OPENAI_API_KEY is not set")
         # Initialize the OpenAI Client
-        self.client = AsyncOpenAI(api_key=self.api_key, organization=self.organization)
+        self.client = OpenAI(api_key=self.api_key, organization=self.organization)
 
         self.max_concurrent_requests = max_concurrent_requests
 
@@ -126,7 +126,7 @@ class ChatGPT(AbstractLanguageModel):
  
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)
-    async def chat(self, messages: List[Dict], num_responses: int = 1) -> ChatCompletion:
+    def chat(self, messages: List[Dict], num_responses: int = 1) -> ChatCompletion:
         """
         Send chat messages to the OpenAI model and retrieves the model's response.
         Implements backoff on OpenAI error.
@@ -138,7 +138,7 @@ class ChatGPT(AbstractLanguageModel):
         :return: The OpenAI model's response.
         :rtype: ChatCompletion
         """
-        response = await self.client.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=self.model_id,
             messages=messages,
             temperature=self.temperature,
