@@ -8,7 +8,7 @@
 
 import backoff
 import os
-from typing import List, Dict, Literal, Union
+from typing import List, Dict, Union
 from openai import OpenAI, OpenAIError
 from openai.types import CreateEmbeddingResponse
 from tqdm import tqdm
@@ -25,7 +25,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
     """
 
     def __init__(
-        self, config_path: str = "", model_name: str = "chatgpt4", variant: Literal["large", "small", ""] = "large", name: str = "gpt-embedding-", cache: bool = False, max_concurrent_requests: int = 10
+        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False, max_concurrent_requests: int = 10
     ) -> None:
         """
         Initialize the EmbeddingGPT instance with configuration, model details, and caching options.
@@ -36,14 +36,12 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         :type model_name: str
         :param variant: The variant of the model to use, either 'large', 'small', or ''. Defaults to 'large'.
         :type variant: Literal["large", "small", ""]
-        :param name: Name used on output files. Defaults to "gpt-embedding-".
-        :type name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
         :param max_concurrent_requests: The maximum number of concurrent requests. Defaults to 10.
         :type max_concurrent_requests: int
         """
-        super().__init__(config_path, model_name, name + variant, cache)
+        super().__init__(config_path, model_name, self.config["name"], cache)
         self.config: Dict = self.config[model_name]
         # The model_id is the id of the model that is used for chatgpt, i.e. gpt-4, gpt-3.5-turbo, etc.
         self.model_id: str = self.config["model_id"]
