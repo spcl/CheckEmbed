@@ -12,7 +12,7 @@
 # modifications: Lorenzo Paleari
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Union, Any
+from typing import List, Dict, Any
 import json
 import logging
 
@@ -24,7 +24,7 @@ class AbstractLanguageModel(ABC):
 
     # modified by Lorenzo Paleari
     def __init__(
-        self, config_path: str = None, model_name: str = "", name: str = "", cache: bool = False
+        self, config_path: str = None, model_name: str = "", cache: bool = False
     ) -> None:
         """
         Initialize the AbstractLanguageModel instance with configuration, model details, and caching options.
@@ -33,20 +33,18 @@ class AbstractLanguageModel(ABC):
         :type config_path: str
         :param model_name: Name of the language model. Defaults to "".
         :type model_name: str
-        :param name: Name of the language model instance. Defaults to "".
-        :type name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.config: Dict = None
         self.model_name: str = model_name
-        self.name: str = name
         self.cache = cache
         if self.cache:
             self.response_cache: Dict[str, List[Any]] = {}
         if config_path is not None:
             self.load_config(config_path)
+        self.name: str = self.config[model_name]["name"]
         self.prompt_tokens: int = 0
         self.completion_tokens: int = 0
         self.cost: float = 0.0
@@ -101,18 +99,5 @@ class AbstractLanguageModel(ABC):
         :type num_query: int
         :return: The language model's response(s).
         :rtype: Any
-        """
-        pass
-
-    # modified by Lorenzo Paleari
-    @abstractmethod
-    def get_response_texts(self, query_response: Union[List[Any], Any]) -> List[str]:
-        """
-        Abstract method to extract response texts from the language model's response(s).
-
-        :param query_response: The responses returned from the language model.
-        :type query_response: Union[List[Any], Any]
-        :return: List of textual responses.
-        :rtype: List[str]
         """
         pass

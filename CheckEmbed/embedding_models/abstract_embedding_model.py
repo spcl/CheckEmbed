@@ -35,12 +35,18 @@ class AbstractEmbeddingModel(ABC):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.config: Dict = None
         self.model_name: str = model_name
-        self.name: str = name
         self.cache = cache
         if self.cache:
             self.response_cache: Dict[str, List[Any]] = {}
         if config_path is not None:
             self.load_config(config_path)
+        self.name: str = name
+        try: 
+            if self.config is not None:
+                if self.config[model_name] is not None:
+                    self.name = self.config[model_name]["name"]
+        except Exception:
+            pass
         self.prompt_tokens: int = 0
         self.cost: float = 0.0
 

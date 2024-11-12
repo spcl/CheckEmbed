@@ -498,26 +498,14 @@ class Scheduler:
 
         # Create the directory structure if necessary
         if defaultDirectories:
-            if not os.path.exists(os.path.join(self.workdir, "embeddings")):
-                os.mkdir(os.path.join(self.workdir, "embeddings"))
-
-            if not os.path.exists(os.path.join(self.workdir, "CheckEmbed")):
-                os.mkdir(os.path.join(self.workdir, "CheckEmbed"))
-
-            if not os.path.exists(os.path.join(self.workdir, "plots", "CheckEmbed")):
-                os.mkdir(os.path.join(self.workdir, "plots", "CheckEmbed"))
-
-            if bertScore and not os.path.exists(os.path.join(self.workdir, "BertScore")):
-                os.mkdir(os.path.join(self.workdir, "BertScore"))
-            
-            if bertScore and not os.path.exists(os.path.join(self.workdir, "plots", "BertScore")):
-                os.mkdir(os.path.join(self.workdir, "plots", "BertScore"))
-
-            if selfCheckGPT and not os.path.exists(os.path.join(self.workdir, "SelfCheckGPT")):
-                os.mkdir(os.path.join(self.workdir, "SelfCheckGPT"))
-
-            if selfCheckGPT and not os.path.exists(os.path.join(self.workdir, "plots", "SelfCheckGPT")):
-                os.mkdir(os.path.join(self.workdir, "plots", "SelfCheckGPT"))
+            os.makedirs(os.path.join(self.workdir, "embeddings"), exist_ok=True)
+            os.makedirs(os.path.join(self.workdir, "CheckEmbed"), exist_ok=True)
+            os.makedirs(os.path.join(self.workdir, "BertScore"), exist_ok=True)
+            os.makedirs(os.path.join(self.workdir, "SelfCheckGPT"), exist_ok=True)
+            # Disable until new plotting scripts are available
+            #os.makedirs(os.path.join(self.workdir, "plots", "CheckEmbed"), exist_ok=True)
+            #os.makedirs(os.path.join(self.workdir, "plots", "BertScore"), exist_ok=True)
+            #os.makedirs(os.path.join(self.workdir, "plots", "SelfCheckGPT"), exist_ok=True)
 
         if time_performance:
             if not os.path.exists(os.path.join(self.workdir, "runtimes")):

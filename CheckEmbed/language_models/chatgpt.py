@@ -46,8 +46,8 @@ class ChatGPT(AbstractLanguageModel):
         :param max_concurrent_requests: The maximum number of concurrent requests. Defaults to 10.
         :type max_concurrent_requests: int
         """
+        super().__init__(config_path, model_name, cache)
         self.config: Dict = self.config[model_name]
-        super().__init__(config_path, model_name, self.config["name"], cache)
         # The model_id is the id of the model that is used for chatgpt, i.e. gpt-4, gpt-3.5-turbo, etc.
         self.model_id: str = self.config["model_id"]
         # The prompt_token_cost and response_token_cost are the costs for 1000 prompt tokens and 1000 response tokens respectively.
@@ -109,7 +109,7 @@ class ChatGPT(AbstractLanguageModel):
                 return self.response_cache[query]
         
         with ThreadPoolExecutor(max_workers=self.max_concurrent_requests) as executor:
-            futures = [executor.submit(self.chat([{"role": "user", "content": query}], 1)) for _ in range(num_query)]
+            futures = [executor.submit(self.chat, [{"role": "user", "content": query}], 1) for _ in range(num_query)]
             results = []
             for future in tqdm(as_completed(futures), total=num_query, desc="Samples", leave=False):
                 try:
@@ -146,7 +146,6 @@ class ChatGPT(AbstractLanguageModel):
             n=num_responses,
             stop=self.stop,
         )
-
         self.prompt_tokens += response.usage.prompt_tokens
         self.completion_tokens += response.usage.completion_tokens
         prompt_tokens_k = float(self.prompt_tokens) / 1000.0
@@ -157,7 +156,7 @@ class ChatGPT(AbstractLanguageModel):
         )
         self.logger.info(
             #f"This is the response from chatgpt: {response}"
-            f"\nThis is the cost of the response: {self.prompt_token_cost * float(response.usage.prompt_tokens) / 1000.0 + self.response_token_cost * float(response.usage.completion_tokens) / 1000.0}"
+            f"This is the cost of the response: {self.prompt_token_cost * float(response.usage.prompt_tokens) / 1000.0 + self.response_token_cost * float(response.usage.completion_tokens) / 1000.0}"
         )
         return response
 
