@@ -38,7 +38,7 @@ embedding_lm = language_models.EmbeddingGPT(
 ```
 
 ### Local Models
-The framework currently supports the following local models: `Salesforce/SFR-Embedding-Mistral`, `intfloat/e5-mistral-7b-instruct` and `Alibaba-NLP/gte-Qwen1.5-7B-instruct`.
+The framework currently supports the following local models: `Salesforce/SFR-Embedding-Mistral`, `intfloat/e5-mistral-7b-instruct`, `Alibaba-NLP/gte-Qwen1.5-7B-instruct`, `dunzhang/stella_en_1.5B_v5` and `dunzhang/stella_en_400M_v5`.
 
 - Instantiate the embedding model based on the owned device.
 - Device can be specified in the `Scheduler`, more [here](/CheckEmbed/scheduler/scheduler.py)
@@ -61,6 +61,18 @@ gteQwen157bInstruct = language_models.GteQwenInstruct(
                             access_token = "", # Add your access token here (Hugging Face)
                             batch_size = 1, # Unless you have more than 32GB of GPU VRAM at your disposal use 1.
                         )
+
+stella_en_15B_v5 = embedding_models.Stella(
+        config_path=config_path,
+        model_name = "dunzhang/stella_en_1.5B_v5",
+        cache = False,
+    )
+
+stella_en_400M_v5 = embedding_models.Stella(
+        config_path=config_path,
+        model_name = "dunzhang/stella_en_400M_v5",
+        cache = False,
+    )
 ```
 
 ## Adding Embedding Models

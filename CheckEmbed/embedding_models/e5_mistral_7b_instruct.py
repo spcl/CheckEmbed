@@ -13,7 +13,7 @@ from torch import Tensor
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModel
 
-from typing import Any, List, Union
+from typing import List, Union
 
 from CheckEmbed.embedding_models import AbstractEmbeddingModel
 

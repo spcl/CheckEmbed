@@ -10,7 +10,7 @@ import asyncio
 import backoff
 import os
 from typing import List, Dict, Union
-from openai import AsyncOpenAI, OpenAIError
+from openai import OpenAI, OpenAIError
 from openai.types import CreateEmbeddingResponse
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -56,7 +56,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         if self.api_key == "":
             self.logger.warning("OPENAI_API_KEY is not set")
         # Initialize the OpenAI Client
-        self.client = AsyncOpenAI(api_key=self.api_key, organization=self.organization)
+        self.client = OpenAI(api_key=self.api_key, organization=self.organization)
 
         self.max_concurrent_requests = max_concurrent_requests
 
@@ -101,7 +101,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         return results
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)
-    async def embed_query(self, input: str) -> CreateEmbeddingResponse:
+    def embed_query(self, input: str) -> CreateEmbeddingResponse:
         """
         Embed the given text into a vector.
 
@@ -110,7 +110,7 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         :return: The embedding of the text.
         :rtype: CreateEmbeddingResponse
         """
-        response = await self.client.embeddings.create(
+        response = self.client.embeddings.create(
             model=self.model_id,
             input=input,
             dimensions=self.dimension,
