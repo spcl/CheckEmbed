@@ -27,6 +27,8 @@ class CheckEmbedOperation_Variant(Operation):
 
         :param result_dir_path: The path to the directory where the results will be stored.
         :type result_dir_path: str
+        :param ground_truth_dir: The path to the directory where the ground truth embeddings are stored.
+        :type ground_truth_dir: str
         :param embeddings_dir_path: The path to the directory where the embeddings are stored.
         :type embeddings_dir_path: str
         """

@@ -10,16 +10,18 @@ import logging
 import os
 from typing import Any, List
 import json
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
-from operation_variants import BertScoreOperation_Variant, SelfCheckGPTOperation_Variant, CheckEmbedOperation_Variant
 from CheckEmbed import language_models
 from CheckEmbed import embedding_models
-from CheckEmbed.plotters import BertPlot
-from CheckEmbed.plotters import CheckEmbedPlot
-from CheckEmbed.plotters import SelfCheckGPTPlot
-from CheckEmbed.plotters import RawEmbeddingHeatPlot
 from CheckEmbed.parser import Parser
 from CheckEmbed.scheduler import Scheduler, StartingPoint
+from CheckEmbed.operations import CheckEmbedOperation
+
+from examples.incremental_forced_hallucination.operation_variants import CheckEmbedOperation_Variant, \
+    BertScoreOperation_Variant, SelfCheckGPT_BERT_Operation_Variant, SelfCheckGPT_NLI_Operation_Variant
+
 
 topics_list = [
 "Supernova",
@@ -221,6 +223,19 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
         access_token = "", # Add your access token here
     )
 
+    stella_en_15B_v5 = embedding_models.Stella(
+        config_path=config_path,
+        model_name = "dunzhang/stella_en_1.5B_v5",
+        variant="1.5B-v5",
+        cache = False,
+    )
+
+    stella_en_400M_v5 = embedding_models.Stella(
+        config_path=config_path,
+        model_name = "dunzhang/stella_en_400M_v5",
+        cache = False,
+    )
+
 
     # Initialize BERTScore, SelfCheckGPT and CheckEmbedOperation operations
     bertOperation = None if ground_truth_gen else BertScoreOperation_Variant(
@@ -229,38 +244,27 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
             current_dir,
         )
 
-    selfCheckGPTOperation = None if ground_truth_gen else SelfCheckGPTOperation_Variant(
+    selfCheckGPTOperation = [] if ground_truth_gen else [
+        SelfCheckGPT_BERT_Operation_Variant(
+            os.path.join(current_dir, "SelfCheckGPT"),
+            os.path.join(current_dir, "../ground_truth"),
+            current_dir,
+        ),
+        SelfCheckGPT_NLI_Operation_Variant(
             os.path.join(current_dir, "SelfCheckGPT"),
             os.path.join(current_dir, "../ground_truth"),
             current_dir,
         )
+    ]
     
-    checkEmbedOperation = None if ground_truth_gen else CheckEmbedOperation_Variant(
+    checkEmbedOperation = CheckEmbedOperation(
+        os.path.join(current_dir, "CheckEmbed_Self"),
+        os.path.join(current_dir, "embeddings")
+    ) if ground_truth_gen else CheckEmbedOperation_Variant(
             os.path.join(current_dir, "CheckEmbed"),
             os.path.join(current_dir, "../ground_truth/embeddings"),
             os.path.join(current_dir, "embeddings"),
         )
-
-    # Initialize the plot operations
-    bertPlot = BertPlot(
-        os.path.join(current_dir, "plots", "BertScore"),
-        os.path.join(current_dir, "BertScore"),
-    )
-
-    selfCheckGPTPlot = SelfCheckGPTPlot(
-        os.path.join(current_dir, "plots", "SelfCheckGPT"),
-        os.path.join(current_dir, "SelfCheckGPT"),
-    )
-
-    rawEmbeddingHeatPlot = RawEmbeddingHeatPlot(
-        os.path.join(current_dir, "plots", "CheckEmbed"),
-        os.path.join(current_dir, "embeddings"),
-    )
-
-    checkEmbedPlot = CheckEmbedPlot(
-        os.path.join(current_dir, "plots", "CheckEmbed"),
-        os.path.join(current_dir, "CheckEmbed"),
-    )
 
     # Initialize the scheduler
     scheduler = Scheduler(
@@ -269,8 +273,7 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
         budget = 10,
         parser = customParser,
         lm = [gpt4_o, gpt3],
-        embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct],
-        operations = [bertPlot, selfCheckGPTPlot, rawEmbeddingHeatPlot, checkEmbedPlot] if not ground_truth_gen else [],
+        embedding_lm = [stella_en_15B_v5, stella_en_400M_v5, embedd_large, e5mistral7b, sfrEmbeddingMistral, gteQwen157bInstruct],
         bertScoreOperation = bertOperation,
         selfCheckGPTOperation = selfCheckGPTOperation,
         checkEmbedOperation = checkEmbedOperation,
@@ -282,11 +285,8 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
         startingPoint = start,
         bertScore = True,
         selfCheckGPT = True,
-        ground_truth = False,
-        spacy_separator = True,
+        rebase_results = True,
         num_samples = 10,
-        lm_names = ["gpt4-o", "gpt"],
-        embedding_lm_names = ["gpt-embedding-large", "sfr-embedding-mistral", "e5-mistral-7b", "gte-qwen-1.5-7b-instruct"],
         bertScore_model = "microsoft/deberta-xlarge-mnli",
         batch_size = 64, # it may be necessary to reduce the batch size if the model is too large
         device = "cuda" # or "cpu" "mps" ...
@@ -294,56 +294,45 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
 
 if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/ground_truth"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir + "/CheckEmbed_Self", exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=True, error_number=0)
 
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/error_1"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir, exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=False, error_number=1)
 
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/error_2"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir, exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=False, error_number=2)
 
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/error_3"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir, exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=False, error_number=3)
 
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/error_4"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir, exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=False, error_number=4)
 
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/error_5"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir, exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=False, error_number=5)
 
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/error_6"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir, exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=False, error_number=6)
 
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/error_7"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir, exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=False, error_number=7)
 
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/error_8"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir, exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=False, error_number=8)
 
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/error_9"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir, exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=False, error_number=9)
 
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/error_10"
-    if not os.path.exists(current_dir):
-        os.makedirs(current_dir)
+    os.makedirs(current_dir, exist_ok=True)
     start(current_dir, topics_list, ground_truth_gen=False, error_number=10)

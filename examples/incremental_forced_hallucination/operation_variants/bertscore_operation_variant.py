@@ -31,6 +31,8 @@ class BertScoreOperation_Variant(Operation):
 
         :param result_dir_path: The path to the directory where the results will be stored.
         :type result_dir_path: str
+        :param ground_truth: The path to the directory where the ground truth samples are stored.
+        :type ground_truth: str
         :param sample_dir_path: The path to the directory where the samples are stored.
         :type sample_dir_path: str
         """

@@ -32,9 +32,12 @@ The extracted JSON file has the following structure in general:
       "#tokens": "time",
       //...
     },
-    "selfcheckgpt": {
+    "selfcheckgpt_bertscore": {
       "#tokens": "time",
       //...
+    },
+    "selfcheckgpt_nli": {
+
     },
     "checkembed": {
       "embedding_model_name": {   //gpt-embedding-large, sfr-embedding-mistral...

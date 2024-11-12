@@ -17,6 +17,7 @@ from datetime import datetime as time
 
 from CheckEmbed import embedding_models
 from CheckEmbed.scheduler import Scheduler, StartingPoint
+from CheckEmbed.operations import SelfCheckGPT_BERT_Operation, SelfCheckGPT_NLI_Operation
 
 def start(current_dir: str, start: int = StartingPoint.PROMPT, n_samples: int = 10) -> None:
     """
@@ -61,26 +62,47 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, n_samples: int = 
         access_token = "", # Add your access token here (Hugging Face)
     )
 
+    stella_en_15B_v5 = embedding_models.Stella(
+        config_path=config_path,
+        model_name = "dunzhang/stella_en_1.5B_v5",
+        variant="1.5B-v5",
+        cache = False,
+    )
+
+    stella_en_400M_v5 = embedding_models.Stella(
+        config_path=config_path,
+        model_name = "dunzhang/stella_en_400M_v5",
+        cache = False,
+    )
+
+    selfCheckGPT_BERT_Operation = SelfCheckGPT_BERT_Operation(
+        os.path.join(current_dir, "SelfCheckGPT"),
+        current_dir,
+    )
+
+    selfCheckGPT_NLI_Operation = SelfCheckGPT_NLI_Operation(
+        os.path.join(current_dir, "SelfCheckGPT"),
+        current_dir,
+    )
+
     # Initialize the scheduler
     scheduler = Scheduler(
         current_dir,
         logging_level = logging.DEBUG,
         budget = 8,
-        embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct],
+        selfCheckGPTOperation=[selfCheckGPT_BERT_Operation, selfCheckGPT_NLI_Operation],
+        embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct, stella_en_400M_v5, stella_en_15B_v5],
     )
 
     # The order of lm_names and embedding_lm_names should be the same 
     # as the order of the language models and embedding language models respectively.
     scheduler.run(
         startingPoint = start,
-        bertScore = False, # Set to True if you want to test BERTScore
-        selfCheckGPT = False, # Set to True if you want to test SelfCheckGPT
-        ground_truth = False,
-        spacy_separator = True,
-        time_performance=True,
+        bertScore = True, # Set to True if you want to test BERTScore
+        selfCheckGPT = True, # Set to True if you want to test SelfCheckGPT
+        time_performance = True,
         num_samples = n_samples,
-        lm_names = [str(i) for i in range(200, 4200, 200)],
-        embedding_lm_names = ["gpt-embedding-large", "sfr-embedding-mistral", "e5-mistral-7b-instruct", "gte-Qwen15-7B-instruct"],
+        lm_names = [str(i) for i in range(200, 4200, 200)], # Overwrite the default lm names
         bertScore_model = "microsoft/deberta-xlarge-mnli",
         device = "cuda",
         batch_size = 64 # it may be necessary to reduce the batch size if the model is too large
@@ -134,7 +156,6 @@ if __name__ == "__main__":
     for sample_count in [2, 4, 6, 8, 10]:
         print(f"\n\n\n#########################\n#\t{sample_count} SAMPLES\t#\n#########################")
         current_dir = os.path.dirname(os.path.abspath(__file__)) + f"/{sample_count}_samples"
-        if not os.path.exists(current_dir):
-            os.makedirs(current_dir)
+        os.makedirs(current_dir, exist_ok=True)
         text_gen(20, n_samples=sample_count, dir=f"{sample_count}_samples")
         start(current_dir, start=StartingPoint.EMBEDDINGS, n_samples=sample_count)
