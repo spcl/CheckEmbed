@@ -525,9 +525,10 @@ class Scheduler:
             with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
                 f.write("Starting performance measurement\n")
 
+        # Set the default names if not provided
         lm_names = lm_names if len(lm_names) > 0 else [lm.name for lm in self.lm]
         embedding_lm_names = embedding_lm_names if len(embedding_lm_names) > 0 else [embedding_lm.name for embedding_lm in self.embedding_lm]
-        
+
         print("Starting point: ", startingPoint)
 
         # PROMPT GENERATION
