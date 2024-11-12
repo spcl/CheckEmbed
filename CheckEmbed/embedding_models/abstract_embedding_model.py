@@ -18,7 +18,7 @@ class AbstractEmbeddingModel(ABC):
     """
 
     def __init__(
-        self, config_path: str = None, model_name: str = "", cache: bool = False
+        self, config_path: str = None, model_name: str = "", name: str = "INVALID_NAME", cache: bool = False
     ) -> None:
         """
         Initialize the AbstractEmbeddingModel instance with configuration, model details, and caching options.
@@ -27,16 +27,19 @@ class AbstractEmbeddingModel(ABC):
         :type config_path: str
         :param model_name: Name of the language model. Defaults to "".
         :type model_name: str
+        :param name: Name of the embedding model. Defaults to "INVALID_NAME".
+        :type name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.config: Dict = None
         self.model_name: str = model_name
+        self.name: str = name
         self.cache = cache
         if self.cache:
             self.response_cache: Dict[str, List[Any]] = {}
-        if config_path != None:
+        if config_path is not None:
             self.load_config(config_path)
         self.prompt_tokens: int = 0
         self.cost: float = 0.0

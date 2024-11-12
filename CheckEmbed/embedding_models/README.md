@@ -3,18 +3,23 @@
 The Embedding Models module is responsible for managing the embedding models.
 
 Currently, the framework supports the following embedding models:
+
 - text-embedding-large / small (remote - OpenAI API)
 - Salesforce/SFR-Embedding-Mistral (local - GPU with 32GB VRAM recommended, model size is roughly 26GB)
 - intfloat/e5-mistral-7b-instruct (local - GPU with 32GB VRAM recommended, model size is roughly 26GB)
 - Alibaba-NLP/gte-Qwen1.5-7B-instruct (local - GPU with 32GB VRAM recommended, model size is roughly 26GB)
+- dunzhang/stella_en_1.5B_v5 (local - GPU with 12GB VRAM recommended, model size is roughly 6GB)
+- dunzhang/stella_en_400M_v5 (local - GPU with 4GB VRAM recommended, model size is roughly 2GB)
 
 The following sections describe how to instantiate individual models and how to add new models to the framework.
 
 ## Embedding Model Instantiation
+
 - Create a copy of `config_template.json` named `config.json` in the CheckEmbed folder. (Not necessary for local models)
 - Fill configuration details based on the used model (below).
 
 ### Embedding-Text-Large / Embedding-Text-Small
+
 - Adjust the predefined `gpt-embedding-large` or `gpt-embedding-small` configurations or create a new configuration with an unique key.
 
 | Key                 | Value                                                                                                                                                                                                                                                                                                                                                               |
@@ -76,25 +81,31 @@ stella_en_400M_v5 = embedding_models.Stella(
 ```
 
 ## Adding Embedding Models
+
 More embedding models can be added by following these steps:
+
 - Create new class as a subclass of `AbstractEmbeddingModel`.
 - Use the constructor for loading the configuration and instantiating the embedding model (if needed).
+
 ```python
 class CustomLanguageModel(AbstractEmbeddingModel):
     def __init__(
         self,
         config_path: str = "",
         model_name: str = "text-embedding-large",
+        name: str = "CustomLanguageModel",
         cache: bool = False
     ) -> None:
-        super().__init__(config_path, model_name, cache)
+        super().__init__(config_path, model_name, name, cache)
         self.config: Dict = self.config[model_name]
         
         # Load data from configuration into variables if needed
 
         # Instantiate model if needed
 ```
+
 - Implement the `generate_embedding` abstract method that is used to get a list of embeddings from the model (remote API call or local model inference).
+
 ```python
 def generate_embedding(
         self,

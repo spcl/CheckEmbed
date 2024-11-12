@@ -14,7 +14,7 @@ from transformers import AutoModel, AutoTokenizer
 from sklearn.preprocessing import normalize
 from huggingface_hub import snapshot_download
 
-from typing import List, Union
+from typing import List, Literal, Union
 
 from CheckEmbed.embedding_models import AbstractEmbeddingModel
 
@@ -27,7 +27,7 @@ class Stella(AbstractEmbeddingModel):
     """
 
     def __init__(
-        self, config_path: str = "", model_name: str = "", cache: bool = False, max_length: int = 4096, batch_size: int = 64
+        self, config_path: str = "", model_name: str = "", variant: Literal["400M-v5", "1.5B-v5", ""] = "400M-v5", name: str = "stella-en-", cache: bool = False, max_length: int = 4096, batch_size: int = 64
     ) -> None:
         """
         Initialize the Stella instance with configuration, model details, and caching options.
@@ -36,6 +36,10 @@ class Stella(AbstractEmbeddingModel):
         :type config_path: str
         :param model_name: Name of the model, default is "". Used to select the correct configuration.
         :type model_name: str
+        :param variant: The variant of the Stella model to use. Defaults to StellaVariant._400M_v5.
+        :type variant: StellaVariant
+        :param name: Name used on output files. Defaults to "stella-en-".
+        :type name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
         :param max_length: The maximum length of the input text.
@@ -43,8 +47,7 @@ class Stella(AbstractEmbeddingModel):
         :param batch_size: The batch size to be used for the model.
         :type batch_size: int
         """
-        super().__init__(config_path, model_name, cache)
-        self.model_name = model_name
+        super().__init__(config_path, model_name, name + variant, cache)
         self.max_length = max_length
         self.batch_size = batch_size
 
