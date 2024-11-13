@@ -9,6 +9,8 @@
 import numpy as np
 import math
 
+# These values are the lowest empiricial values observed for a given
+# embedding model during our evaluation.
 REBASING_VALUES = {
     "gpt-embedding-large": 0.36156142737003805,
     "sfr-embedding-mistral": 0.4590856938212389,
