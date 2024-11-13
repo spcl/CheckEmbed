@@ -1,3 +1,3 @@
 from .bertscore_operation_variant import BertScoreOperation_Variant
-from .selfcheckgpt_operation_variant import SelfCheckGPTOperation_Variant
+from .selfcheckgpt_operation_variant import SelfCheckGPT_BERT_Operation_Variant, SelfCheckGPT_NLI_Operation_Variant
 from .checkembed_operation_variant import CheckEmbedOperation_Variant

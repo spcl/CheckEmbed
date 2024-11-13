@@ -43,7 +43,7 @@ scheduler = Scheduler(
     embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct],
 
     # Operations to be executed during the evaluation stage.
-    operations = [bertPlot, selfCheckGPTPlot, rawEmbeddingHeatPlot, checkEmbedPlot],
+    operations = [operation1, operation2, ...],
 )
 
 # The order of lm_names and embedding_lm_names should be the same
@@ -52,19 +52,27 @@ scheduler.run(
     # If an error occurs, the starting point can be adjusted to avoid recomputation.
     startingPoint = StartingPoint.PROMPT,
 
+    # utility functions
+    defaultDirectories = True,
+
     # Indicate which operations to run.
     bertScore = True,
     selfCheckGPT = True,
-    checkEmbed: bool = True,
+    checkEmbed = True,
+
+    # Settings for the pipeline.
     ground_truth = False,
     spacy_separator = True,
+    time_performance = False,
+    rebase_results = False,
+    reference_text = False,
 
     # Number of samples per prompt example.
     num_samples = 10,
 
-    # Change accordingly to changes of the lm / embedding_lm parameters of the Scheduler.
+    # Optional values, if not set, the default values will be used.
     lm_names = ["gpt4-o", "gpt4-turbo", "gpt"],
-    embedding_lm_names = ["gpt-embedding-large", "sfr-embedding-mistral", "e5-mistral-7b-instruct", "gte-Qwen15-7B-instruct"],
+    embedding_lm_names = ["gpt-embedding-large", "sfr-embedding-mistral", "e5-mistral-7B-instruct", "gte-Qwen1.5-7B-instruct", "stella-en-400M-v5", "stella-en-1.5B-v5"],
 
     # Do not modify
     bertScore_model = "microsoft/deberta-xlarge-mnli",

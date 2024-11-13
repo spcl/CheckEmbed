@@ -481,7 +481,7 @@ def plot_runtime(filename_in, filename_out, folders, methods, ce_models, scgpt_m
     method_info = {
         # Used in the main plot
         "bert": ("BERTScore", "#999900", "o"),
-        "scgpt_bert": ("SelfCheckGPT (BERTScore)", "#990099", "s"),
+        "scgpt_bert": ("SelfCheckGPT (BERT)", "#990099", "s"),
         "scgpt_nli": ("SelfCheckGPT (NLI)", "#009999", "D"),
         "ce_ste400": ("CheckEmbed (STE400)", "#009900", "v"),
         "ce_ste1.5": ("CheckEmbed (STE1.5)", "#000099", "^"),
@@ -522,7 +522,7 @@ def plot_runtime(filename_in, filename_out, folders, methods, ce_models, scgpt_m
         # Configure x-axis
         ax[i].set_xticks(list(range(200,4200,200)))
         ax[i].set_xticklabels(list(range(200,4200,200)), rotation=90)
-        ax[i].set_xlabel("Number of Tokens")
+        ax[i].set_xlabel("Number of tokens")
         ax[i].set_xlim(200, 4000)
         # Configure y-axis
         ax[i].set_yscale("log")
@@ -615,9 +615,9 @@ def plot_samples_accuracy(dir: str, output_name: str):
     ax.set_xticklabels(list(range(2,22,2)))
     ax.set_yticks(list(range(60, 80, 2)))
     ax.set_yticklabels(list(range(60, 80, 2)))
-    ax.set_xlabel("Number of Samples")
+    ax.set_xlabel("Number of samples")
     ax.set_ylim(60, 78)
-    ax.set_ylabel("Spearman's rank Correlation")
+    ax.set_ylabel("Spearman's rank correlation")
     ax.grid(axis='y')
 
     ax.legend(loc="lower right", bbox_to_anchor=(1, 0), ncol=1, fontsize=10)

@@ -1,4 +1,4 @@
 from .operations import Operation
 from .bertscore_operation import BertScoreOperation
 from .checkembed_operation import CheckEmbedOperation
-from .selfcheckgpt_operation import SelfCheckGPTOperation
+from .selfcheckgpt_operation import SelfCheckGPT_Operation, SelfCheckGPT_BERT_Operation, SelfCheckGPT_NLI_Operation

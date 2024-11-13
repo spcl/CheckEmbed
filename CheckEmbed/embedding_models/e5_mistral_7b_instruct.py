@@ -13,7 +13,7 @@ from torch import Tensor
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModel
 
-from typing import Any, List, Union
+from typing import List, Union
 
 from CheckEmbed.embedding_models import AbstractEmbeddingModel
 
@@ -26,25 +26,24 @@ class E5Mistral7b(AbstractEmbeddingModel):
     """
 
     def __init__(
-        self, config_path: str = "", model_name: str = "", cache: bool = False, max_length: int = 4096, batch_size: int = 64
+        self, model_name: str = "", name: str = "e5-mistral-7B-instruct", cache: bool = False, max_length: int = 4096, batch_size: int = 64
     ) -> None:
         """
         Initialize the E5Mistral7b instance with configuration, model details, and caching options.
 
-        :param config_path: Path to the configuration file. Defaults to "".
-        :type config_path: str
-        :param model_name: Name of the model, default is "". Used to select the correct configuration.
+        :param model_name: Name of the model, which is used to select the correct configuration. Defaults to "".
         :type model_name: str
+        :param name: Name used for output files. Defaults to "e5-mistral-7B-instruct".
+        :type name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
-        :param max_length: The maximum length of the input text.
+        :param max_length: The maximum length of the input text. Defaults to 4096.
         :type max_length: int
-        :param batch_size: The batch size to be used for the model.
+        :param batch_size: The batch size to be used for the model. Defaults to 64.
         :type batch_size: int
         """
-        super().__init__(config_path, model_name, cache)
+        super().__init__(model_name=model_name, name=name, cache=cache)
         self.tokenizer_name = model_name
-        self.model_name = model_name
         self.max_length = max_length
         self.batch_size = batch_size
 

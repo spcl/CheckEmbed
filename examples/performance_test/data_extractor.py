@@ -12,7 +12,7 @@ import re
 
 from typing import List, Dict, Tuple
 
-steps = ["Embedding generation", "BERTScore operation", "SelfCheckGPT operation", "CheckEmbed operation", "Operations"]
+steps = ["Embedding generation", "BERTScore operation", "SelfCheckGPT_BertScore operation", "SelfCheckGPT_NLI operation", "SelfCheckGPT operation", "CheckEmbed operation", "Operations"]
 
 def extract_embeddings(lines: List[str], i: int) -> Tuple[Dict[str, Dict[str, float]], int]:
     """
@@ -200,6 +200,10 @@ def extract(
                         sample_results["embedding"], i = extract_embeddings(lines, i)
                     elif step == "BERTScore operation":
                         sample_results["bertscore"], i = extract_bertscore(lines, i)
+                    elif step == "SelfCheckGPT_BertScore operation":
+                        sample_results["selfcheckgpt_bertscore"], i = extract_selfcheckgpt(lines, i)
+                    elif step == "SelfCheckGPT_NLI operation":
+                        sample_results["selfcheckgpt_nli"], i = extract_selfcheckgpt(lines, i)
                     elif step == "SelfCheckGPT operation":
                         sample_results["selfcheckgpt"], i = extract_selfcheckgpt(lines, i)
                     elif step == "CheckEmbed operation":

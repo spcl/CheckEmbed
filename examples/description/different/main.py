@@ -13,12 +13,9 @@ import json
 
 from CheckEmbed import language_models
 from CheckEmbed import embedding_models
-from CheckEmbed.plotters import BertPlot
-from CheckEmbed.plotters import CheckEmbedPlot
-from CheckEmbed.plotters import SelfCheckGPTPlot
-from CheckEmbed.plotters import RawEmbeddingHeatPlot
 from CheckEmbed.parser import Parser
 from CheckEmbed.scheduler import Scheduler, StartingPoint
+from CheckEmbed.operations import SelfCheckGPT_BERT_Operation, SelfCheckGPT_NLI_Operation
 
 different_topics_list = [
 ["sunrise over a mountain range", "a bustling city street"],
@@ -259,43 +256,40 @@ def start(current_dir: str, list: List[str]) -> None:
     )
 
     sfrEmbeddingMistral = embedding_models.SFREmbeddingMistral(
-        config_path,
         model_name = "Salesforce/SFR-Embedding-Mistral",
         cache = False,
     )
 
     e5mistral7b = embedding_models.E5Mistral7b(
-        config_path,
         model_name = "intfloat/e5-mistral-7b-instruct",
         cache = False,
     )
 
     gteQwen157bInstruct = embedding_models.GteQwenInstruct(
-        config_path=config_path,
         model_name = "Alibaba-NLP/gte-Qwen1.5-7B-instruct",
         cache = False,
         access_token = "", # Add your access token here (Hugging Face)
     )
 
-    # Initialize the operations
-    bertPlot = BertPlot(
-        os.path.join(current_dir, "plots", "BertScore"),
-        os.path.join(current_dir, "BertScore"),
+    stella_en_15B_v5 = embedding_models.Stella(
+        model_name = "dunzhang/stella_en_1.5B_v5",
+        variant = "1.5B-v5",
+        cache = False,
     )
 
-    selfCheckGPTPlot = SelfCheckGPTPlot(
-        os.path.join(current_dir, "plots", "SelfCheckGPT"),
+    stella_en_400M_v5 = embedding_models.Stella(
+        model_name = "dunzhang/stella_en_400M_v5",
+        cache = False,
+    )
+
+    selfCheckGPT_BERT_Operation = SelfCheckGPT_BERT_Operation(
         os.path.join(current_dir, "SelfCheckGPT"),
+        current_dir,
     )
 
-    rawEmbeddingHeatPlot = RawEmbeddingHeatPlot(
-        os.path.join(current_dir, "plots", "CheckEmbed"),
-        os.path.join(current_dir, "embeddings"),
-        )
-
-    checkEmbedPlot = CheckEmbedPlot(
-        os.path.join(current_dir, "plots", "CheckEmbed"),
-        os.path.join(current_dir, "CheckEmbed"),
+    selfCheckGPT_NLI_Operation = SelfCheckGPT_NLI_Operation(
+        os.path.join(current_dir, "SelfCheckGPT"),
+        current_dir,
     )
 
     # Initialize the scheduler
@@ -305,8 +299,8 @@ def start(current_dir: str, list: List[str]) -> None:
         budget = 12,
         parser = customParser,
         lm = [gpt4_o, gpt4, gpt3],
-        embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct],
-        operations = [bertPlot, selfCheckGPTPlot, rawEmbeddingHeatPlot, checkEmbedPlot],
+        embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct, stella_en_15B_v5, stella_en_400M_v5],
+        selfCheckGPTOperation=[selfCheckGPT_NLI_Operation, selfCheckGPT_BERT_Operation],
     )
 
     # The order of lm_names and embedding_lm_names should be the same 
@@ -315,11 +309,8 @@ def start(current_dir: str, list: List[str]) -> None:
         startingPoint = StartingPoint.PROMPT,
         bertScore = True,
         selfCheckGPT = True,
-        ground_truth = False,
-        spacy_separator = True,
+        rebase_results=True,
         num_samples = 1,
-        lm_names = ["gpt4-o", "gpt4-turbo", "gpt"],
-        embedding_lm_names = ["gpt-embedding-large", "sfr-embedding-mistral", "e5-mistral-7b-instruct", "gte-Qwen15-7B-instruct"],
         bertScore_model = "microsoft/deberta-xlarge-mnli",
         device = "cuda",
         batch_size = 64 # it may be necessary to reduce the batch size if the model is too large

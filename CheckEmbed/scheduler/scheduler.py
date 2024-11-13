@@ -19,12 +19,10 @@ from CheckEmbed.language_models import AbstractLanguageModel
 from CheckEmbed.embedding_models import AbstractEmbeddingModel
 from CheckEmbed.operations import BertScoreOperation
 from CheckEmbed.operations import CheckEmbedOperation
-from CheckEmbed.operations import SelfCheckGPTOperation
+from CheckEmbed.operations import SelfCheckGPT_Operation, SelfCheckGPT_NLI_Operation
 from CheckEmbed.operations import Operation
 from CheckEmbed.parser import Parser
 from CheckEmbed.embedder import Embedder
-
-from enum import Enum
 
 class StartingPoint(Enum):
     """
@@ -59,7 +57,7 @@ class Scheduler:
             embedding_lm: List[AbstractEmbeddingModel] = None,
             operations: List[Operation] = [],
             bertScoreOperation: BertScoreOperation = None,
-            selfCheckGPTOperation: SelfCheckGPTOperation = None,
+            selfCheckGPTOperation: List[SelfCheckGPT_Operation] = [],
             checkEmbedOperation: CheckEmbedOperation = None,
         ) -> None:
         """
@@ -83,8 +81,8 @@ class Scheduler:
         :type operations: List[Operation]
         :param bertScoreOperation: An instance of a custom BertScoreOperation class for the BERTScore computation. Defaults to None. If None, the default BertScoreOperation will be used.
         :type bertScoreOperation: BertScoreOperation
-        :param selfCheckGPTOperation: An instance of a custom selfCheckGPTOperation class for the SelfCheckGPT computation. Defaults to None. If None, the default SelfCheckGPTOperation will be used.
-        :type selfCheckGPTOperation: selfCheckGPTOperation
+        :param selfCheckGPTOperation: A list of instances of a custom selfCheckGPTOperation class for the SelfCheckGPT computation. Defaults to an empty list. If Empty, the default SelfCheckGPT_NLI_Operation will be used.
+        :type selfCheckGPTOperation: List[SelfCheckGPT_Operation]
         :param checkEmbedOperation: An instance of a custom CheckEmbedOperation class for CheckEmbed computation. Defaults to None. If None, the default CheckEmbedOperation will be used.
         :type checkEmbedOperation: CheckEmbedOperation
         """
@@ -98,7 +96,7 @@ class Scheduler:
         self.budget = budget
         self.operations = operations
         self.bertScoreOperation = BertScoreOperation(os.path.join(workdir, "BertScore"), workdir) if bertScoreOperation is None else bertScoreOperation
-        self.selfCheckGPTOperation = SelfCheckGPTOperation(os.path.join(workdir, "SelfCheckGPT"), workdir) if selfCheckGPTOperation is None else selfCheckGPTOperation
+        self.selfCheckGPTOperation = [SelfCheckGPT_NLI_Operation(os.path.join(workdir, "SelfCheckGPT"), workdir)] if len(selfCheckGPTOperation) == 0 else selfCheckGPTOperation
         self.checkEmbedOperation = CheckEmbedOperation(os.path.join(workdir, "CheckEmbed"), os.path.join(workdir, "embeddings")) if checkEmbedOperation is None else checkEmbedOperation
 
     def _prompt_generation(self) -> bool:
@@ -154,7 +152,7 @@ class Scheduler:
 
         if time_performance:
             with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                f.write(f"\n\nSample generation\n")
+                f.write("\n\nSample generation\n")
 
         # Sampling
         performance_times = []
@@ -253,14 +251,19 @@ class Scheduler:
         
         if time_performance:
             with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                f.write(f"\n\nEmbedding generation\n")
+                f.write("\n\nEmbedding generation\n")
         
         performance_times = []
         # Getting samples from the json file
         for index2, embedding_lm_name in (pbar := tqdm(enumerate(embedding_lm_names), desc="Embedding Language Models", leave=False, total=len(embedding_lm_names))):
             pbar.set_postfix_str(f"{embedding_lm_name}")
 
-            self.embedding_lm[index2].load_model(device=device)
+            try:
+                self.embedding_lm[index2].load_model(device=device)
+            except Exception as e:
+                logging.error(f"Error while loading {embedding_lm_name}: {e}")
+                print(f"Error while loading {embedding_lm_name}: {e}")
+                continue
             # Initialize logging
             logging.basicConfig(
                 filename=os.path.join(embeddings_dir, "embed_log.log"),
@@ -310,12 +313,6 @@ class Scheduler:
                     with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
                         f.write(f"\t\t - LM {lm_names[index]}: {embedding_times[-1]} seconds\n")
 
-                end = timer() if time_performance else None
-                embedding_times.append(end - start if time_performance else None)
-                if time_performance:
-                    with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                        f.write(f"\t\t - LM {lm_names[index]}: {embedding_times[-1]} seconds\n")
-
                 if self.budget < 0:
                     break
             
@@ -354,7 +351,7 @@ class Scheduler:
 
             if time_performance and ground_truth:
                 with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                    f.write(f"\n\nEmbedding generation for the ground truth\n")
+                    f.write("\n\nEmbedding generation for the ground truth\n")
 
             performance_times = []
             logging.info("Generating embeddings for ground of truth...")
@@ -415,7 +412,7 @@ class Scheduler:
         """
         if time_performance:
             with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
-                f.write(f"\n\nOperations\n")
+                f.write("\n\nOperations\n")
         
         performance_times = []
         for operation in self.operations:
@@ -453,6 +450,8 @@ class Scheduler:
             ground_truth: bool = False,
             spacy_separator: bool = True,
             time_performance: bool = False,
+            rebase_results: bool = False,
+            reference_text: bool = False,
             num_samples: int = 10, 
             lm_names: List[str] = [],
             embedding_lm_names: List[str] = [],
@@ -479,11 +478,15 @@ class Scheduler:
         :type spacy_separator: bool
         :param time_performance: A flag indicating whether to measure the runtime of the operations. Defaults to False.
         :type time_performance: bool
+        :param rebase_results: A flag indicating whether to rebase the results of the CheckEmbed operation. Defaults to False.
+        :type rebase_results: bool
+        :param reference_text: A flag indicating whether to use the reference text for the SelfCheckGPT operation. Defaults to False.
+        :type reference_text: bool
         :param num_samples: The number of samples to generate for each prompt. Defaults to 10.
         :type num_samples: int
-        :param lm_names: The names of the language models used for sampling. Defaults to an empty list.
+        :param lm_names: Overwrite default names of used LLMs. Defaults to an empty list.
         :type lm_names: List[str]
-        :param embedding_lm_names: The names of the embedding models used for the embedding. Defaults to an empty list.
+        :param embedding_lm_names: Overwrite default names of used embedding models. Defaults to an empty list.
         :type embedding_lm_names: List[str]
         :param bertScore_model: The BERTScore model to be used for the operation. Defaults to None.
         :type bertScore_model: str
@@ -495,35 +498,24 @@ class Scheduler:
 
         # Create the directory structure if necessary
         if defaultDirectories:
-            if not os.path.exists(os.path.join(self.workdir, "embeddings")):
-                os.mkdir(os.path.join(self.workdir, "embeddings"))
-
-            if not os.path.exists(os.path.join(self.workdir, "plots")):
-                os.mkdir(os.path.join(self.workdir, "plots"))
-
-            if not os.path.exists(os.path.join(self.workdir, "CheckEmbed")):
-                os.mkdir(os.path.join(self.workdir, "CheckEmbed"))
-
-            if not os.path.exists(os.path.join(self.workdir, "plots", "CheckEmbed")):
-                os.mkdir(os.path.join(self.workdir, "plots", "CheckEmbed"))
-
-            if bertScore and not os.path.exists(os.path.join(self.workdir, "BertScore")):
-                os.mkdir(os.path.join(self.workdir, "BertScore"))
-            
-            if bertScore and not os.path.exists(os.path.join(self.workdir, "plots", "BertScore")):
-                os.mkdir(os.path.join(self.workdir, "plots", "BertScore"))
-
-            if selfCheckGPT and not os.path.exists(os.path.join(self.workdir, "SelfCheckGPT")):
-                os.mkdir(os.path.join(self.workdir, "SelfCheckGPT"))
-
-            if selfCheckGPT and not os.path.exists(os.path.join(self.workdir, "plots", "SelfCheckGPT")):
-                os.mkdir(os.path.join(self.workdir, "plots", "SelfCheckGPT"))
+            os.makedirs(os.path.join(self.workdir, "embeddings"), exist_ok=True)
+            os.makedirs(os.path.join(self.workdir, "CheckEmbed"), exist_ok=True)
+            os.makedirs(os.path.join(self.workdir, "BertScore"), exist_ok=True)
+            os.makedirs(os.path.join(self.workdir, "SelfCheckGPT"), exist_ok=True)
+            # Disable until new plotting scripts are available
+            #os.makedirs(os.path.join(self.workdir, "plots", "CheckEmbed"), exist_ok=True)
+            #os.makedirs(os.path.join(self.workdir, "plots", "BertScore"), exist_ok=True)
+            #os.makedirs(os.path.join(self.workdir, "plots", "SelfCheckGPT"), exist_ok=True)
 
         if time_performance:
             if not os.path.exists(os.path.join(self.workdir, "runtimes")):
                 os.mkdir(os.path.join(self.workdir, "runtimes"))
             with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
                 f.write("Starting performance measurement\n")
+
+        # Set the default names if not provided
+        lm_names = lm_names if len(lm_names) > 0 else [lm.name for lm in self.lm]
+        embedding_lm_names = embedding_lm_names if len(embedding_lm_names) > 0 else [embedding_lm.name for embedding_lm in self.embedding_lm]
 
         print("Starting point: ", startingPoint)
 
@@ -573,18 +565,19 @@ class Scheduler:
             print("Remaining budget: ", self.budget)
 
         print("\n\nStarting operations...")
+        if selfCheckGPT:
+            for selfcheckgpt in self.selfCheckGPTOperation:
+                selfcheckgpt.execute(custom_inputs={"logging_level": self.logging_level, "lm_names": lm_names, "device": device, "batch_size": batch_size, "spacy": spacy_separator, "time_performance": time_performance, "reference_text": reference_text})
+            print("Done!\n")
+
         if bertScore:
             self.bertScoreOperation.execute(custom_inputs={"logging_level": self.logging_level, "ground_truth": ground_truth, "model_type": bertScore_model, "lm_names": lm_names, "batch_size": batch_size, "device": device, "time_performance": time_performance})
-            print(f"Done!\n")
-
-        if selfCheckGPT:
-            self.selfCheckGPTOperation.execute(custom_inputs={"logging_level": self.logging_level, "lm_names": lm_names, "device": device, "batch_size": batch_size, "spacy": spacy_separator, "time_performance": time_performance})
-            print(f"Done!\n")
+            print("Done!\n")
 
         if checkEmbed:
             print("\n\nStarting CheckEmbed operation...")
-            self.checkEmbedOperation.execute(custom_inputs={"ground_truth": ground_truth, "time_performance": time_performance})  
-            print(f"Done!\n")
+            self.checkEmbedOperation.execute(custom_inputs={"ground_truth": ground_truth, "time_performance": time_performance, "rebase_results": rebase_results})  
+            print("Done!\n")
 
         print("\n\nStarting other operations...")
         self._operations(ground_truth=ground_truth, time_performance=time_performance)

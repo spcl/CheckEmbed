@@ -15,7 +15,7 @@
 import backoff
 import os
 from typing import List, Dict, Union
-from openai import AsyncOpenAI, OpenAIError
+from openai import OpenAI, OpenAIError
 from openai.types.chat.chat_completion import ChatCompletion
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
@@ -67,7 +67,7 @@ class ChatGPT(AbstractLanguageModel):
         if self.api_key == "":
             self.logger.warning("OPENAI_API_KEY is not set")
         # Initialize the OpenAI Client
-        self.client = AsyncOpenAI(api_key=self.api_key, organization=self.organization)
+        self.client = OpenAI(api_key=self.api_key, organization=self.organization)
 
         self.max_concurrent_requests = max_concurrent_requests
 
@@ -109,7 +109,7 @@ class ChatGPT(AbstractLanguageModel):
                 return self.response_cache[query]
         
         with ThreadPoolExecutor(max_workers=self.max_concurrent_requests) as executor:
-            futures = [executor.submit(self.chat([{"role": "user", "content": query}], 1)) for _ in range(num_query)]
+            futures = [executor.submit(self.chat, [{"role": "user", "content": query}], 1) for _ in range(num_query)]
             results = []
             for future in tqdm(as_completed(futures), total=num_query, desc="Samples", leave=False):
                 try:
@@ -126,7 +126,7 @@ class ChatGPT(AbstractLanguageModel):
  
 
     @backoff.on_exception(backoff.expo, OpenAIError, max_time=10, max_tries=6)
-    async def chat(self, messages: List[Dict], num_responses: int = 1) -> ChatCompletion:
+    def chat(self, messages: List[Dict], num_responses: int = 1) -> ChatCompletion:
         """
         Send chat messages to the OpenAI model and retrieves the model's response.
         Implements backoff on OpenAI error.
@@ -138,7 +138,7 @@ class ChatGPT(AbstractLanguageModel):
         :return: The OpenAI model's response.
         :rtype: ChatCompletion
         """
-        response = await self.client.chat.completions.create(
+        response = self.client.chat.completions.create(
             model=self.model_id,
             messages=messages,
             temperature=self.temperature,
@@ -146,7 +146,6 @@ class ChatGPT(AbstractLanguageModel):
             n=num_responses,
             stop=self.stop,
         )
-
         self.prompt_tokens += response.usage.prompt_tokens
         self.completion_tokens += response.usage.completion_tokens
         prompt_tokens_k = float(self.prompt_tokens) / 1000.0
@@ -157,7 +156,7 @@ class ChatGPT(AbstractLanguageModel):
         )
         self.logger.info(
             #f"This is the response from chatgpt: {response}"
-            f"\nThis is the cost of the response: {self.prompt_token_cost * float(response.usage.prompt_tokens) / 1000.0 + self.response_token_cost * float(response.usage.completion_tokens) / 1000.0}"
+            f"This is the cost of the response: {self.prompt_token_cost * float(response.usage.prompt_tokens) / 1000.0 + self.response_token_cost * float(response.usage.completion_tokens) / 1000.0}"
         )
         return response
 

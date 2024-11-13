@@ -12,7 +12,7 @@
 # modifications: Lorenzo Paleari
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Union, Any
+from typing import Any, Dict, List, Union
 import json
 import logging
 
@@ -42,8 +42,9 @@ class AbstractLanguageModel(ABC):
         self.cache = cache
         if self.cache:
             self.response_cache: Dict[str, List[Any]] = {}
-        if config_path != None:
+        if config_path is not None:
             self.load_config(config_path)
+        self.name: str = self.config[model_name]["name"]
         self.prompt_tokens: int = 0
         self.completion_tokens: int = 0
         self.cost: float = 0.0

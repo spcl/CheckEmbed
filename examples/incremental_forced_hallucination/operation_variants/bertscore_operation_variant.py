@@ -25,18 +25,20 @@ class BertScoreOperation_Variant(Operation):
     Inherits from the Operation class and implements its abstract methods.
     """
 
-    def __init__(self, result_dir_path: str, ground_truth: str, sample_dir_path: str) -> None:
+    def __init__(self, result_dir_path: str, ground_truth_dir_path: str, sample_dir_path: str) -> None:
         """
         Initialize the operation.
 
         :param result_dir_path: The path to the directory where the results will be stored.
         :type result_dir_path: str
+        :param ground_truth_dir_path: The path to the directory where the ground truth samples are stored.
+        :type ground_truth_dir_path: str
         :param sample_dir_path: The path to the directory where the samples are stored.
         :type sample_dir_path: str
         """
         super().__init__(result_dir_path)
         self.sample_dir_path = sample_dir_path
-        self.ground_truth = ground_truth
+        self.ground_truth = ground_truth_dir_path
 
     def execute(self, custom_inputs: Any) -> Any:
         """

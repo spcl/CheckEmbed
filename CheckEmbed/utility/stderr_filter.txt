@@ -2,3 +2,6 @@ Empty candidate sentence detected; setting raw BERTscores to 0
 Warning: Empty reference sentence detected; setting raw BERTScores to 0
 Some weights of RobertaModel were not initialized from the model checkpoint at roberta-large and are newly initialized: ['roberta.pooler.dense.bias', 'roberta.pooler.dense.weight']
 You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+`clean_up_tokenization_spaces` was not set. It will be set to `True` by default. This behavior will be depracted in transformers v4.45, and will be then set to `False` by default.
+For more details check this issue: https://github.com/huggingface/transformers/issues/31884
+warnings.warn(

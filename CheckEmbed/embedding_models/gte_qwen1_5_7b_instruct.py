@@ -26,25 +26,26 @@ class GteQwenInstruct(AbstractEmbeddingModel):
     """
 
     def __init__(
-        self, access_token: str, config_path: str = "", model_name: str = "", cache: bool = False, max_length: int = 8192, batch_size: int = 64
+        self, access_token: str = "", model_name: str = "", name: str = "gte-qwen1.5-7B-instruct", cache: bool = False, max_length: int = 8192, batch_size: int = 64
     ) -> None:
         """
         Initialize the GteQwenInstruct instance with configuration, model details, and caching options.
 
-        :param config_path: Path to the configuration file. Defaults to "".
-        :type config_path: str
-        :param model_name: Name of the model, default is "". Used to select the correct configuration.
+        :param access_token: The Hugging Face access token to use for the model. Defaults to "".
+        :type access_token: str
+        :param model_name: Name of the model, which is used to select the correct configuration. Defaults to "".
         :type model_name: str
+        :param name: Name used for output files. Defaults to "gte-qwen1.5-7B-instruct".
+        :type name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
-        :param max_length: The maximum length of the input text.
+        :param max_length: The maximum length of the input text. Defaults to 8192.
         :type max_length: int
-        :param batch_size: The batch size to be used for the model.
+        :param batch_size: The batch size to be used for the model. Defaults to 64.
         :type batch_size: int
         """
-        super().__init__(config_path, model_name, cache)
+        super().__init__(model_name=model_name, name=name, cache=cache)
         self.tokenizer_name = model_name
-        self.model_name = model_name
         self.max_length = max_length
         self.access_token = access_token
         self.batch_size = batch_size

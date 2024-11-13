@@ -31,3 +31,15 @@ venv/
 
 # Mac folder attributes
 .DS_Store
+
+# Exclude working dir
+results/
+error_*/
+ground_truth/
+BertScore/
+SelfCheckGPT/
+embeddings/
+plots/
+*_samples/
+examples/**/CheckEmbed/
+paper/**/CheckEmbed/
