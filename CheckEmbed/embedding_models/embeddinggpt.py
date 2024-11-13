@@ -8,7 +8,7 @@
 
 import backoff
 import os
-from typing import List, Dict, Union
+from typing import Dict, List, Literal, Union
 from openai import OpenAI, OpenAIError
 from openai.types import CreateEmbeddingResponse
 from tqdm import tqdm
@@ -25,14 +25,14 @@ class EmbeddingGPT(AbstractEmbeddingModel):
     """
 
     def __init__(
-        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False, max_concurrent_requests: int = 10
+        self, config_path: str = "", model_name: str = "chatgpt4", variant: Literal["large", "small", ""] = "large", cache: bool = False, max_concurrent_requests: int = 10
     ) -> None:
         """
         Initialize the EmbeddingGPT instance with configuration, model details, and caching options.
 
         :param config_path: Path to the configuration file. Defaults to "".
         :type config_path: str
-        :param model_name: Name of the model, default is 'chatgpt4'. Used to select the correct configuration.
+        :param model_name: Name of the model, which is used to select the correct configuration. Defaults to 'chatgpt4'.
         :type model_name: str
         :param variant: The variant of the model to use, either 'large', 'small', or ''. Defaults to 'large'.
         :type variant: Literal["large", "small", ""]

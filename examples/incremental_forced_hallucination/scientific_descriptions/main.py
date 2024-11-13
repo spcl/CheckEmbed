@@ -217,21 +217,21 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
     )
 
     gteQwen157bInstruct = embedding_models.GteQwenInstruct(
-        config_path=config_path,
+        config_path = config_path,
         model_name= "Alibaba-NLP/gte-Qwen1.5-7B-instruct",
         cache = False,
         access_token = "", # Add your access token here
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        config_path=config_path,
+        config_path = config_path,
         model_name = "dunzhang/stella_en_1.5B_v5",
-        variant="1.5B-v5",
+        variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        config_path=config_path,
+        config_path = config_path,
         model_name = "dunzhang/stella_en_400M_v5",
         cache = False,
     )

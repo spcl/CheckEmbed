@@ -26,9 +26,9 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray, rebase: bool = False, emb_na
         :type a: np.ndarray
         :param b: The second vector.
         :type b: np.ndarray
-        :param rebase: Whether to rebase the cosine similarity. Default is False.
+        :param rebase: Whether to rebase the cosine similarity. Defaults to False.
         :type rebase: bool
-        :param emb_name: The name of the embedding model. Default is "".
+        :param emb_name: The name of the embedding model. Defaults to "".
         :type emb_name: str
         :return: The cosine similarity between the two vectors.
         :rtype: float
@@ -60,7 +60,7 @@ def frobenius_norm(matrix: np.ndarray, bert: bool = False) -> float:
 
     :param matrix: Input matrix.
     :type matrix: np.ndarray
-    :param bert: Whether the matrix is a BertScore matrix. Default is False.
+    :param bert: Whether the matrix is a BertScore matrix. Defaults to False.
     :type bert: bool
     :return: Frobenius norm.
     :rtype: float
@@ -85,7 +85,7 @@ def frobenius_norm_no_diag(matrix: np.ndarray, bert: bool = False) -> float:
 
     :param matrix: Input matrix.
     :type matrix: np.ndarray
-    :param bert: Whether the matrix is a BertScore matrix. Default is False.
+    :param bert: Whether the matrix is a BertScore matrix. Defaults to False.
     :type bert: bool
     :return: Frobenius norm.
     :rtype: float

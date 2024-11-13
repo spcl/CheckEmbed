@@ -20,10 +20,10 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
 
     :param current_dir: The current directory.
     :type current_dir: str
-    :param num_chunks: The number of chunks. Defaults to 1.
-    :type num_chunks: int
     :param start: The starting point. Defaults to StartingPoint.PROMPT.
     :type start: StartingPoint
+    :param not_ce: Flag to indicate whether we execute the CheckEmbed operation. Defaults to False.
+    :type not_ce: bool
     """
 
     # Config file for the LLM(s)
@@ -61,16 +61,17 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
     )
 
     gteQwen157bInstruct = embedding_models.GteQwenInstruct(
-        config_path=config_path,
+        config_path = config_path,
         model_name = "Alibaba-NLP/gte-Qwen1.5-7B-instruct",
         cache = False,
         access_token = "", # Add your access token here
-        batch_size=4, # it may be necessary to reduce the batch size if the GPU VRAM < 40GB
+        batch_size = 4, # it may be necessary to reduce the batch size if the GPU VRAM < 40GB
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        config_path=config_path,
+        config_path = config_path,
         model_name = "dunzhang/stella_en_1.5B_v5",
+        variant = "1.5B-v5",
         cache = False,
     )
 
@@ -85,7 +86,7 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
         current_dir,
         logging_level = logging.DEBUG,
         budget = 30,
-        selfCheckGPTOperation=[selfCheckGPT_BERT_Operation, selfCheckGPT_NLI_Operation],
+        selfCheckGPTOperation = [selfCheckGPT_BERT_Operation, selfCheckGPT_NLI_Operation],
         embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct, stella_en_400M_v5, stella_en_15B_v5],
     )
 
@@ -96,15 +97,21 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
         selfCheckGPT = not_ce,
         checkEmbed = not not_ce,
         bertScore = not_ce,
-        rebase_results=True,
-        reference_text=True,
+        rebase_results = True,
+        reference_text = True,
         lm_names = ["wikibio"], # Override the language model names
         bertScore_model = "microsoft/deberta-xlarge-mnli",
         batch_size = 64, # it may be necessary to reduce the batch size if the model is too large
         device = "cuda" # or "cpu" "mps" ...
     )
 
-def prepare_data(current_dir: str):
+def prepare_data(current_dir: str) -> None:
+    """
+    Prepare the data.
+
+    :param current_dir: Directory, from where the script is executed.
+    :type current_dir: str
+    """
     original_current_dir = current_dir
 
     for i in range(2, 22, 2):
@@ -141,7 +148,13 @@ def prepare_data(current_dir: str):
             with open(current_dir + "/SCGPT_samples/wikibio_samples.json", "w") as f:
                 json.dump({"data" : scgpt}, f, indent=4)
 
-def move_embeddings(current_dir: str):
+def move_embeddings(current_dir: str) -> None:
+    """
+    Move the embedding data to a different location.
+
+    :param current_dir: Directory, from where the script is executed.
+    :type current_dir: str
+    """
     original_current_dir = current_dir
     embedding_dir = current_dir + "/20_samples" + "/embeddings"
 
@@ -165,7 +178,6 @@ def move_embeddings(current_dir: str):
                 json.dump({"data": new_value}, f, indent=4)
 
 
-
 if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/results"
     os.makedirs(current_dir, exist_ok=True)
@@ -179,6 +191,4 @@ if __name__ == "__main__":
         start(current_dir + f"/{i}_samples", start=StartingPoint.OPERATIONS, not_ce = False)
 
         # The following line is really slow, it is recommended only to get results for i = 20
-        start(current_dir + f"/{i}_samples", start=StartingPoint.EMBEDDINGS, not_ce=True)
-
-
+        start(current_dir + f"/{i}_samples", start=StartingPoint.EMBEDDINGS, not_ce = True)

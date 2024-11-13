@@ -37,7 +37,8 @@ The extracted JSON file has the following structure in general:
       //...
     },
     "selfcheckgpt_nli": {
-
+      "#tokens": "time",
+      //...
     },
     "checkembed": {
       "embedding_model_name": {   //gpt-embedding-large, sfr-embedding-mistral...

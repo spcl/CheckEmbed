@@ -82,7 +82,7 @@ class Scheduler:
         :param bertScoreOperation: An instance of a custom BertScoreOperation class for the BERTScore computation. Defaults to None. If None, the default BertScoreOperation will be used.
         :type bertScoreOperation: BertScoreOperation
         :param selfCheckGPTOperation: A list of instances of a custom selfCheckGPTOperation class for the SelfCheckGPT computation. Defaults to an empty list. If Empty, the default SelfCheckGPT_NLI_Operation will be used.
-        :type selfCheckGPTOperation: List[selfCheckGPTOperation]
+        :type selfCheckGPTOperation: List[SelfCheckGPT_Operation]
         :param checkEmbedOperation: An instance of a custom CheckEmbedOperation class for CheckEmbed computation. Defaults to None. If None, the default CheckEmbedOperation will be used.
         :type checkEmbedOperation: CheckEmbedOperation
         """
@@ -484,9 +484,9 @@ class Scheduler:
         :type reference_text: bool
         :param num_samples: The number of samples to generate for each prompt. Defaults to 10.
         :type num_samples: int
-        :param lm_names: Overwrite default names of LLM used. Defaults to an empty list.
+        :param lm_names: Overwrite default names of used LLMs. Defaults to an empty list.
         :type lm_names: List[str]
-        :param embedding_lm_names: Overwrite default names of Embedding Models used. Defaults to an empty list.
+        :param embedding_lm_names: Overwrite default names of used embedding models. Defaults to an empty list.
         :type embedding_lm_names: List[str]
         :param bertScore_model: The BERTScore model to be used for the operation. Defaults to None.
         :type bertScore_model: str

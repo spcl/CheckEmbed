@@ -21,19 +21,19 @@ class CheckEmbedOperation_Variant(Operation):
     Operation that computes the cosine similarity, the Pearson correlation, the Frobenius norm and standard deviation between the embeddings.
     """
 
-    def __init__(self, result_dir_path: str, ground_truth_dir: str, embeddings_dir_path: str) -> None:
+    def __init__(self, result_dir_path: str, ground_truth_dir_path: str, embeddings_dir_path: str) -> None:
         """
         Initialize the operation.
 
         :param result_dir_path: The path to the directory where the results will be stored.
         :type result_dir_path: str
-        :param ground_truth_dir: The path to the directory where the ground truth embeddings are stored.
-        :type ground_truth_dir: str
+        :param ground_truth_dir_path: The path to the directory where the ground truth embeddings are stored.
+        :type ground_truth_dir_path: str
         :param embeddings_dir_path: The path to the directory where the embeddings are stored.
         :type embeddings_dir_path: str
         """
         super().__init__(result_dir_path)
-        self.ground_truth_dir = ground_truth_dir
+        self.ground_truth_dir = ground_truth_dir_path
         self.embeddings_dir_path = embeddings_dir_path
 
     def execute(self, custom_inputs: Any) -> Any:

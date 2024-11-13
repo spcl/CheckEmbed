@@ -21,7 +21,7 @@ from CheckEmbed.embedding_models import AbstractEmbeddingModel
 
 class Stella(AbstractEmbeddingModel):
     """
-    The Stella class handles interactions with the Stella embedding model using the provided configuration.
+    The Stella class handles interactions with the Stella embedding model family using the provided configuration.
     
     Inherits from the AbstractEmbeddingModel class and implements its abstract methods.
     """
@@ -36,15 +36,15 @@ class Stella(AbstractEmbeddingModel):
         :type config_path: str
         :param model_name: Name of the model, default is "". Used to select the correct configuration.
         :type model_name: str
-        :param variant: The variant of the Stella model to use. Defaults to StellaVariant._400M_v5.
-        :type variant: StellaVariant
-        :param name: Name used on output files. Defaults to "stella-en-".
+        :param variant: The variant of the Stella model to use. Defaults to "400M_v5".
+        :type variant: Literal["400M-v5", "1.5B-v5", ""]
+        :param name: Name used for output files. Defaults to "stella-en-".
         :type name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
-        :param max_length: The maximum length of the input text.
+        :param max_length: The maximum length of the input text. Defaults to 4096.
         :type max_length: int
-        :param batch_size: The batch size to be used for the model.
+        :param batch_size: The batch size to be used for the model. Defaults to 64.
         :type batch_size: int
         """
         super().__init__(config_path, model_name, name + variant, cache)
@@ -90,7 +90,6 @@ class Stella(AbstractEmbeddingModel):
         
         :param input: The input text to embed.
         :type input: Union[List[str], str]
-        
         :return: The embeddings of the text.
         :rtype: List[List[float]]
         """
@@ -144,6 +143,3 @@ class Stella(AbstractEmbeddingModel):
                 self.batch_size = self.batch_size // 2
 
         return total_embeddings
-
-    
-    

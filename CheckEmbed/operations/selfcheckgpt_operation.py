@@ -19,7 +19,7 @@ import numpy as np
 import bert_score
 
 from tqdm import tqdm
-from typing import List, Any, Tuple
+from typing import Any, List, Tuple
 from timeit import default_timer as timer
 
 from CheckEmbed.operations import Operation
@@ -127,6 +127,8 @@ class SelfCheckBERTScore:
 class SelfCheckGPT_Operation(Operation):
     """
     Base class for the SelfCheckGPT operations.
+
+    Inherits from the Operation class and implements some of its abstract methods.
     """
 
     def __init__(self, result_dir_path: str, sample_dir_path: str) -> None:
@@ -135,6 +137,8 @@ class SelfCheckGPT_Operation(Operation):
 
         :param result_dir_path: The path to the directory where the results will be stored.
         :type result_dir_path: str
+        :param sample_dir_path: The path to the directory where the samples are stored.
+        :type sample_dir_path: str
         """
         super().__init__(result_dir_path)
         self.sample_dir_path = sample_dir_path
@@ -166,7 +170,7 @@ class SelfCheckGPT_Operation(Operation):
             with open(os.path.join(self.sample_dir_path, "runtimes", "performance_log.log"), "a") as f:
                 f.write(f"\n\nSelfCheckGPT_{name} operation\n")
 
-        # For every language model response file run SelfCheckGPT with BertScore
+        # For every language model response file run the SelfCheckGPT operation
         performance_times = []
         for lm_name in (pbar := tqdm(custom_inputs["lm_names"], desc="Language Models", leave=True)):
             pbar.set_postfix_str(f"{lm_name}")
@@ -204,7 +208,7 @@ class SelfCheckGPT_Operation(Operation):
 
             logging.info("Loaded samples.")
 
-            # Run SelfCheckGPT with BertScore
+            # Run the SelfCheckGPT operation
             logging.info(f"Running SelfCheckGPT_{name} for {lm_name}.")
 
             results = []
@@ -251,6 +255,8 @@ class SelfCheckGPT_Operation(Operation):
 
         :param custom_inputs: The custom inputs for the operation.
         :type custom_inputs: Any
+        :return: The initialized SelfCheckGPT operation and its name..
+        :rtype: Tuple[Operation, str]
         """
         raise NotImplementedError("The init_selfcheckgpt method must be implemented.")
     
@@ -279,7 +285,6 @@ class SelfCheckGPT_BERT_Operation(SelfCheckGPT_Operation):
 
         :param custom_inputs: The custom inputs for the operation.
         :type custom_inputs: Any
-        
         :return: The initialized SelfCheckGPT operation and its name.
         :rtype: Tuple[Operation, str]
         """
@@ -313,7 +318,6 @@ class SelfCheckGPT_NLI_Operation(SelfCheckGPT_Operation):
 
         :param custom_inputs: The custom inputs for the operation.
         :type custom_inputs: Any
-
         :return: The initialized SelfCheckGPT operation and its name.
         :rtype: Tuple[Operation, str]
         """

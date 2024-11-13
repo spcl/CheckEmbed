@@ -33,15 +33,15 @@ class GteQwenInstruct(AbstractEmbeddingModel):
 
         :param config_path: Path to the configuration file. Defaults to "".
         :type config_path: str
-        :param model_name: Name of the model, default is "". Used to select the correct configuration.
+        :param model_name: Name of the model, which is used to select the correct configuration. Defaults to "".
         :type model_name: str
-        :param name: Name used on output files. Defaults to "gte-qwen1.5-7B-instruct".
+        :param name: Name used for output files. Defaults to "gte-qwen1.5-7B-instruct".
         :type name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
-        :param max_length: The maximum length of the input text.
+        :param max_length: The maximum length of the input text. Defaults to 8192.
         :type max_length: int
-        :param batch_size: The batch size to be used for the model.
+        :param batch_size: The batch size to be used for the model. Defaults to 64.
         :type batch_size: int
         """
         super().__init__(config_path, model_name, name, cache)

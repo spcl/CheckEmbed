@@ -19,7 +19,7 @@ import numpy as np
 import bert_score
 
 from tqdm import tqdm
-from typing import List, Any, Tuple
+from typing import Any, List, Tuple
 from timeit import default_timer as timer
 
 from CheckEmbed.operations import Operation
@@ -129,19 +129,19 @@ class SelfCheckGPT_Operation_Variant(Operation):
     Base class for the SelfCheckGPT operations.
     """
 
-    def __init__(self, result_dir_path: str, ground_truth_dir: str, sample_dir_path: str) -> None:
+    def __init__(self, result_dir_path: str, ground_truth_dir_path: str, sample_dir_path: str) -> None:
         """
         Initialize the operation.
 
         :param result_dir_path: The path to the directory where the results will be stored.
         :type result_dir_path: str
-        :param ground_truth_dir: The path to the directory where the ground truth is stored.
-        :type ground_truth_dir: str
+        :param ground_truth_dir_path: The path to the directory where the ground truth is stored.
+        :type ground_truth_dir_path: str
         :param sample_dir_path: The path to the directory where the samples are stored.
         :type sample_dir_path: str
         """
         super().__init__(result_dir_path)
-        self.ground_truth_dir = ground_truth_dir
+        self.ground_truth_dir = ground_truth_dir_path
         self.sample_dir_path = sample_dir_path
 
     def execute(self, custom_inputs: Any) -> None:
@@ -171,7 +171,7 @@ class SelfCheckGPT_Operation_Variant(Operation):
             with open(os.path.join(self.sample_dir_path, "runtimes", "performance_log.log"), "a") as f:
                 f.write(f"\n\nSelfCheckGPT_{name} operation\n")
 
-        # For every language model response file run SelfCheckGPT with BertScore
+        # For every language model response file run the SelfCheckGPT operation
         performance_times = []
         for lm_name in (pbar := tqdm(custom_inputs["lm_names"], desc="Language Models", leave=True)):
             pbar.set_postfix_str(f"{lm_name}")
@@ -207,7 +207,7 @@ class SelfCheckGPT_Operation_Variant(Operation):
 
             logging.info("Loaded samples.")
 
-            # Run SelfCheckGPT with BertScore
+            # Run the SelfCheckGPT operation
             logging.info(f"Running SelfCheckGPT_{name} for {lm_name}.")
 
             results = []
@@ -254,28 +254,31 @@ class SelfCheckGPT_Operation_Variant(Operation):
 
         :param custom_inputs: The custom inputs for the operation.
         :type custom_inputs: Any
+        :return: The initialized SelfCheckGPT operation and its name.
+        :rtype: Tuple[Operation, str]
         """
         raise NotImplementedError("The init_selfcheckgpt method must be implemented.")
+
 
 class SelfCheckGPT_BERT_Operation_Variant(SelfCheckGPT_Operation_Variant):
     """
     Operation that computes the SelfCheckGPT score using Bert for the samples.
 
-    Inherits from the Operation class and implements its abstract methods.
+    Inherits from the SelfCheckGPT_Operation_Variant class and implements its abstract methods.
     """
 
-    def __init__(self, result_dir_path: str, ground_truth_dir: str, sample_dir_path: str) -> None:
+    def __init__(self, result_dir_path: str, ground_truth_dir_path: str, sample_dir_path: str) -> None:
         """
         Initialize the operation.
 
         :param result_dir_path: The path to the directory where the results will be stored.
         :type result_dir_path: str
-        :param ground_truth_dir: The path to the directory where the ground truth is stored.
-        :type ground_truth_dir: str
+        :param ground_truth_dir_path: The path to the directory where the ground truth is stored.
+        :type ground_truth_dir_path: str
         :param sample_dir_path: The path to the directory where the samples are stored.
         :type sample_dir_path: str
         """
-        super().__init__(result_dir_path, ground_truth_dir, sample_dir_path)
+        super().__init__(result_dir_path, ground_truth_dir_path, sample_dir_path)
 
     def instance_selfcheckgpt(self, custom_inputs: Any) -> Tuple[Operation, str]:
         """
@@ -283,7 +286,6 @@ class SelfCheckGPT_BERT_Operation_Variant(SelfCheckGPT_Operation_Variant):
 
         :param custom_inputs: The custom inputs for the operation.
         :type custom_inputs: Any
-        
         :return: The initialized SelfCheckGPT operation and its name.
         :rtype: Tuple[Operation, str]
         """
@@ -297,21 +299,21 @@ class SelfCheckGPT_NLI_Operation_Variant(SelfCheckGPT_Operation_Variant):
     """
     Operation that computes the SelfCheckGPT score using NLI for the samples.
 
-    Inherits from the Operation class and implements its abstract methods.
+    Inherits from the SelfCheckGPT_Operation_Variant class and implements its abstract methods.
     """
 
-    def __init__(self, result_dir_path: str, ground_truth_dir: str, sample_dir_path: str) -> None:
+    def __init__(self, result_dir_path: str, ground_truth_dir_path: str, sample_dir_path: str) -> None:
         """
         Initialize the operation.
 
         :param result_dir_path: The path to the directory where the results will be stored.
         :type result_dir_path: str
-        :param ground_truth_dir: The path to the directory where the ground truth is stored.
-        :type ground_truth_dir: str
+        :param ground_truth_dir_path: The path to the directory where the ground truth is stored.
+        :type ground_truth_dir_path: str
         :param sample_dir_path: The path to the directory where the samples are stored.
         :type sample_dir_path: str
         """
-        super().__init__(result_dir_path, ground_truth_dir, sample_dir_path)
+        super().__init__(result_dir_path, ground_truth_dir_path, sample_dir_path)
 
     def instance_selfcheckgpt(self, custom_inputs: Any) -> Tuple[Operation, str]:
         """
@@ -319,7 +321,6 @@ class SelfCheckGPT_NLI_Operation_Variant(SelfCheckGPT_Operation_Variant):
 
         :param custom_inputs: The custom inputs for the operation.
         :type custom_inputs: Any
-
         :return: The initialized SelfCheckGPT operation and its name.
         :rtype: Tuple[Operation, str]
         """

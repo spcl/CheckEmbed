@@ -12,7 +12,7 @@
 # modifications: Lorenzo Paleari
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 import json
 import logging
 

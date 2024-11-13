@@ -167,22 +167,22 @@ def start(current_dir: str, num_chunks: int = 1, start: int = StartingPoint.PROM
     )
 
     gteQwen157bInstruct = embedding_models.GteQwenInstruct(
-        config_path=config_path,
+        config_path = config_path,
         model_name = "Alibaba-NLP/gte-Qwen1.5-7B-instruct",
         cache = False,
         access_token = "", # Add your access token here
-        batch_size=4, # it may be necessary to reduce the batch size if the GPU VRAM < 40GB
+        batch_size = 4, # it may be necessary to reduce the batch size if the GPU VRAM < 40GB
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        config_path=config_path,
+        config_path = config_path,
         model_name = "dunzhang/stella_en_1.5B_v5",
-        variant="1.5B-v5",
+        variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        config_path=config_path,
+        config_path = config_path,
         model_name = "dunzhang/stella_en_400M_v5",
         cache = False,
     )

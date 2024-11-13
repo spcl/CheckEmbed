@@ -43,7 +43,7 @@ def read_runtimes(filename: str, folders: List[str], methods: List[str], embeddi
     :param embedding_models: The embedding models used.
     :type embedding_models: List[str]
     :param scgpt_methods: The SelfCheckGPT methods used.
-    :type scgpt_methods: List[str | None]
+    :type scgpt_methods: Union[List[str], None]
     :return: The runtimes.
     :rtype: Dict[str, Dict[str, Dict[str, Dict[str, List[float]]]]]
     """
@@ -109,9 +109,9 @@ def plot_performance(filename: str, output_filename: str, folders: List[str], me
     :param methods: The methods used.
     :type methods: List[str]
     :param embedding_models: The embedding models used.
-    :type embedding_models: list[str]
+    :type embedding_models: List[str]
     :param scgpt_methods: The SelfCheckGPT methods used.
-    :type scgpt_methods: list[str | None]
+    :type scgpt_methods: Union[List[str], None]
     """
     method_labels = {
         "bert": "BERTScore",
@@ -204,6 +204,6 @@ if __name__ == "__main__":
     # text-embedding-large, sfr-embedding-mistral, e5-mistral-7B-instruct, gte-qwen1.5-7B-instruct, stella-en-400M-v5, stella-en-1.5B-v5 (in order)
     embedding_models = ["gpt", "sfr", "e5", "gte", "ste400", "ste1.5"]
 
-    scgpt_models = ["bert", "nli"]
+    scgpt_methods = ["bert", "nli"]
 
-    plot_performance(input_file, output_file, folders, methods, embedding_models, scgpt_models)
+    plot_performance(input_file, output_file, folders, methods, embedding_models, scgpt_methods)

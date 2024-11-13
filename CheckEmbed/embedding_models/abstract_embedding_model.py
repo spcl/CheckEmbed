@@ -23,7 +23,7 @@ class AbstractEmbeddingModel(ABC):
         """
         Initialize the AbstractEmbeddingModel instance with configuration, model details, and caching options.
 
-        :param config_path: Path to the config file. Defaults to "". If provided, the config is loaded from the file.
+        :param config_path: Path to the config file. If provided, the config is loaded from the file. Defaults to "".
         :type config_path: str
         :param model_name: Name of the language model. Defaults to "".
         :type model_name: str
