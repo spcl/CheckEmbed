@@ -54,7 +54,7 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
     )
 
     e5mistral7b = embedding_models.E5Mistral7b(
-        model_name = "Salesforce/SFR-Embedding-Mistral",
+        model_name = "intfloat/e5-mistral-7b-instruct",
         cache = False,
     )
 
