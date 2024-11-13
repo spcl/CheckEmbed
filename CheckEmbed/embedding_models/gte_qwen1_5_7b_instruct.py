@@ -26,13 +26,13 @@ class GteQwenInstruct(AbstractEmbeddingModel):
     """
 
     def __init__(
-        self, access_token: str, config_path: str = "", model_name: str = "", name: str = "gte-qwen1.5-7B-instruct", cache: bool = False, max_length: int = 8192, batch_size: int = 64
+        self, access_token: str = "", model_name: str = "", name: str = "gte-qwen1.5-7B-instruct", cache: bool = False, max_length: int = 8192, batch_size: int = 64
     ) -> None:
         """
         Initialize the GteQwenInstruct instance with configuration, model details, and caching options.
 
-        :param config_path: Path to the configuration file. Defaults to "".
-        :type config_path: str
+        :param access_token: The Hugging Face access token to use for the model. Defaults to "".
+        :type access_token: str
         :param model_name: Name of the model, which is used to select the correct configuration. Defaults to "".
         :type model_name: str
         :param name: Name used for output files. Defaults to "gte-qwen1.5-7B-instruct".
@@ -44,7 +44,7 @@ class GteQwenInstruct(AbstractEmbeddingModel):
         :param batch_size: The batch size to be used for the model. Defaults to 64.
         :type batch_size: int
         """
-        super().__init__(config_path, model_name, name, cache)
+        super().__init__(model_name=model_name, name=name, cache=cache)
         self.tokenizer_name = model_name
         self.max_length = max_length
         self.access_token = access_token

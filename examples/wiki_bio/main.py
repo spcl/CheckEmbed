@@ -49,19 +49,16 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
     )
 
     sfrEmbeddingMistral = embedding_models.SFREmbeddingMistral(
-        config_path,
         model_name = "Salesforce/SFR-Embedding-Mistral",
         cache = False,
     )
 
     e5mistral7b = embedding_models.E5Mistral7b(
-        config_path,
-        model_name = "intfloat/e5-mistral-7b-instruct",
+        model_name = "Salesforce/SFR-Embedding-Mistral",
         cache = False,
     )
 
     gteQwen157bInstruct = embedding_models.GteQwenInstruct(
-        config_path = config_path,
         model_name = "Alibaba-NLP/gte-Qwen1.5-7B-instruct",
         cache = False,
         access_token = "", # Add your access token here
@@ -69,14 +66,12 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        config_path = config_path,
         model_name = "dunzhang/stella_en_1.5B_v5",
         variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        config_path=config_path,
         model_name = "dunzhang/stella_en_400M_v5",
         cache = False,
     )

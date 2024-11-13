@@ -25,6 +25,7 @@ The following sections describe how to instantiate individual models and how to 
 | Key                 | Value                                                                                                                                                                                                                                                                                                                                                               |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | model_id            | Model name based on [OpenAI model overview](https://platform.openai.com/docs/models/overview).                                                                                                                                                                                                                                                                      |
+| name                | Name used for CheckEmbed output files.                                                                                                                                                                                                                                                                                                                              |
 | token_cost          | Price per 1000 tokens based on [OpenAI pricing](https://openai.com/pricing), used for calculating cumulative price per LLM instance.                                                                                                                                                                                  |
 | encoding            | String indicating the format to return the embeddings in. Can be either float or base64. More information can be found in the [OpenAI API reference](https://platform.openai.com/docs/api-reference/embeddings/create#embeddings-create-encoding_format). |
 | dimension           | Number indicating output dimension for the embedding model. More information can be found in the [OpenAI model overview](https://platform.openai.com/docs/models/overview).                                                                                                       |
@@ -68,15 +69,15 @@ gteQwen157bInstruct = language_models.GteQwenInstruct(
                         )
 
 stella_en_15B_v5 = embedding_models.Stella(
-        config_path=config_path,
         model_name = "dunzhang/stella_en_1.5B_v5",
         cache = False,
+        batch_size = 64,
     )
 
 stella_en_400M_v5 = embedding_models.Stella(
-        config_path=config_path,
         model_name = "dunzhang/stella_en_400M_v5",
         cache = False,
+        batch_size = 64,
     )
 ```
 
