@@ -15,7 +15,7 @@ authors = [
 description = "Python package for 'CheckEmbed'"
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.8.12,<3.11"
+requires-python = ">=3.9,<3.11"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
@@ -36,7 +36,7 @@ dependencies = [
   "selfcheckgpt>=0.1.7,<1.0.0",
   "sentencepiece>=0.2.0,<0.3.0",
   "tiktoken>=0.7.0,<1.0.0",
-  "torch>=2.2.2,<2.4.1",
+  "torch==2.6.0",
   "transformers>=4.41.0,<5.0.0",
   "wheel>=0.43.0,<1.0.0",
 ]
