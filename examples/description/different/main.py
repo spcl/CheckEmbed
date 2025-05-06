@@ -272,13 +272,13 @@ def start(current_dir: str, list: List[str]) -> None:
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_1.5B_v5",
+        model_name = "NovaSearch/stella_en_1.5B_v5",
         variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_400M_v5",
+        model_name = "NovaSearch/stella_en_400M_v5",
         cache = False,
     )
 
