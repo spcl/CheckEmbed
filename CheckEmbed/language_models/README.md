@@ -5,7 +5,7 @@ The Language Models module is responsible for managing the large language models
 Currently, the framework supports the following LLMs models:
 
 - GPT-4 / GPT-3.5 (remote - OpenAI API)
-- LLama3 70b and 8b (local - ChatOllama)
+- Llama3 70b and 8b (local - ChatOllama)
 
 The following sections describe how to instantiate individual models and how to add new models to the framework.
 
@@ -45,7 +45,7 @@ lm = language_models.ChatGPT(
 
 ### LLAMA3
 
-- Adjust the predefined `llama70b`, `llaam8b` configurations or create a new configuration with an unique key.
+- Adjust the predefined `llama70b`, `llama8b` configurations or create a new configuration with an unique key.
 
 | Key                 | Value                                                                                                                                                                                                                                                                                                                                                               |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -63,7 +63,7 @@ lm = language_models.ChatGPT(
 lm = language_models.LLMChatOllama(
         config_path,
         model_name = <configuration-key>,
-        cache = <False | True>,,
+        cache = <False | True>,
         temperature = 0.1,
     )
 ```

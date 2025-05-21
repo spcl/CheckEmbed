@@ -130,7 +130,7 @@ prompt_template = PromptTemplate(
     template="""
 ### INSTRUCTION ###
 
-You are a linguistic expert. You will be given two separate descriptions. You job is to rate how similar the two descriptions are based on the content of the description. You will need to output a scrore from 0 to 100, where 0 means the description are about completely different things, and 100 means the descriptions are about the same thing. 
+You are a linguistic expert. You will be given two separate descriptions. You job is to rate how similar the two descriptions are based on the content of the description. You will need to output a score from 0 to 100, where 0 means the description are about completely different things, and 100 means the descriptions are about the same thing.
 
 ### OUTPUT ###
 
@@ -318,13 +318,13 @@ def start(current_dir: str, list: List[str]):
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_1.5B_v5",
+        model_name = "NovaSearch/stella_en_1.5B_v5",
         variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_400M_v5",
+        model_name = "NovaSearch/stella_en_400M_v5",
         cache = False,
     )
 
@@ -358,8 +358,8 @@ def start(current_dir: str, list: List[str]):
         parser = customParser,
         lm = [gpt4_o, gpt4, gpt3],
         embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct, stella_en_15B_v5, stella_en_400M_v5],
-        selfCheckGPTOperation=[selfCheckGPT_NLI_Operation, selfCheckGPT_BERT_Operation],
-        llm_as_a_judge_Operation=llm_judge_Operation,
+        selfCheckGPTOperation = [selfCheckGPT_NLI_Operation, selfCheckGPT_BERT_Operation],
+        llm_as_a_judge_Operation = llm_judge_Operation,
         llm_as_a_judge_models = [gpt4_o_mini, gpt4_o_2, llama70, llama8],
     )
 

@@ -24,4 +24,4 @@ The total estimated costs are $1.55 for each subtask:
 - GPT4-turbo: $1
 - GPT3.5: $0.05
 
-Running LLM-as-a-Judge for all subtask will result in an additional cost not superior to $1.
+Running LLM-as-a-Judge for all subtasks will result in an additional cost of no more than $1.

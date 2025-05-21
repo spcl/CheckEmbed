@@ -68,8 +68,12 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
     :type current_dir: str
     :param start: The starting point. Defaults to StartingPoint.PROMPT.
     :type start: StartingPoint
-    :param not_ce: Flag to indicate whether we execute the CheckEmbed operation. Defaults to False.
+    :param not_ce: Flag to indicate whether to execute the CheckEmbed operation. Defaults to False.
     :type not_ce: bool
+    :param llm_as_a_judge: Flag to indicate whether to execute the LLMAsAJudge operation. Defaults to False.
+    :type llm_as_a_judge: bool
+    :param llm_as_a_judge_with_ref: Flag to indicate whether to execute the LLMAsAJudge operation with a reference version. Defaults to False.
+    :type llm_as_a_judge_with_ref: bool
     """
 
     # Config file for the LLM(s)
@@ -104,7 +108,7 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
     llm_judge_Operation_with_ref = LLMAsAJudgeOperation(
         os.path.join(current_dir, "Judge"),
         current_dir,
-        prompt_template = prompt_template,
+        prompt_template = prompt_template_with_ref,
         original = os.path.join(current_dir, "../original_samples.json"),
         original_position = 1,
         reference_txt = "ref",
@@ -162,13 +166,13 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_1.5B_v5",
+        model_name = "NovaSearch/stella_en_1.5B_v5",
         variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_400M_v5",
+        model_name = "NovaSearch/stella_en_400M_v5",
         cache = False,
     )
 
@@ -179,7 +183,7 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
         budget = 30,
         selfCheckGPTOperation = [selfCheckGPT_BERT_Operation, selfCheckGPT_NLI_Operation],
         embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct, stella_en_400M_v5, stella_en_15B_v5],
-        llm_as_a_judge_Operation=llm_judge_Operation if llm_as_a_judge else llm_judge_Operation_with_ref,
+        llm_as_a_judge_Operation = llm_judge_Operation if llm_as_a_judge else llm_judge_Operation_with_ref,
         llm_as_a_judge_models = [gpt4_o_mini, gpt4_o, llama70, llama8],
     )
 

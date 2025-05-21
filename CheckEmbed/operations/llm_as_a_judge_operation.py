@@ -1,4 +1,4 @@
-# Copyright (c) 2024 ETH Zurich.
+# Copyright (c) 2025 ETH Zurich.
 #                    All rights reserved.
 #
 # Use of this source code is governed by a BSD-style license that can be
@@ -37,10 +37,12 @@ class LLMAsAJudgeOperation(Operation):
         :type answer_dir_path: str
         :param prompt_template: The prompt template to be used for the language model.
         :type prompt_template: PromptTemplate
-        :param original: The original data.
+        :param original: The original data. Defaults to None.
         :type original: str
-        :param original_position: The position of the original data in the prompt template.
+        :param original_position: The position of the original data in the prompt template. Defaults to 0.
         :type original_position: int
+        :param reference_txt: Reference text for the comparison. Defaults to None.
+        :type reference_txt: str
         """
         super().__init__(result_dir_path)
         self.answer_dir_path = answer_dir_path
@@ -49,7 +51,7 @@ class LLMAsAJudgeOperation(Operation):
         self.original_position = original_position
         self.reference_txt = reference_txt
 
-    def execute(self, custom_inputs: Any) -> Any:
+    def execute(self, custom_inputs: Any) -> None:
         """
         Execute the operation on the embeddings/samples.
 
@@ -131,5 +133,3 @@ class LLMAsAJudgeOperation(Operation):
                     return
                 with open(os.path.join(self.result_dir_path, name + "_judge.json"), "w") as f:
                     json.dump({"data": results}, f, indent=4)
-
-                

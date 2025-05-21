@@ -1,4 +1,4 @@
-# Copyright (c) 2023, 2024 ETH Zurich.
+# Copyright (c) 2025 ETH Zurich.
 #                    All rights reserved.
 #
 # Use of this source code is governed by a BSD-style license that can be
@@ -16,21 +16,20 @@ from CheckEmbed.language_models import AbstractLanguageModel
 
 class LLMChatOllama(AbstractLanguageModel):
     """
-    The ChatGPT class handles interactions with the OpenAI models using the provided configuration.
+    The LLMChatOllama class handles interactions with Ollama models using the provided configuration.
 
     Inherits from the AbstractLanguageModel class and implements its abstract methods.
     """
 
-    # modified by Lorenzo Paleari
     def __init__(
-        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False, temperature: float = None
+        self, config_path: str = "", model_name: str = "llama8b", cache: bool = False, temperature: float = None
     ) -> None:
         """
-        Initialize the ChatGPT instance with configuration, model details, and caching options.
+        Initialize the LLMChatOllama instance with configuration, model details, and caching options.
 
         :param config_path: Path to the configuration file. Defaults to "".
         :type config_path: str
-        :param model_name: Name of the model, default is 'chatgpt4'. Used to select the correct configuration.
+        :param model_name: Name of the model, default is 'llama8b'. Used to select the correct configuration.
         :type model_name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
@@ -46,7 +45,7 @@ class LLMChatOllama(AbstractLanguageModel):
         self.num_batch = self.config["num_batch"]
         self.keep_alive = self.config["keep_alive"]
         self.temperature: float = temperature if temperature is not None else self.config["temperature"]
-        # Initialize the OpenAI Client
+        # Initialize the Ollama Client
         self.client = ChatOllama(
             model=self.model_id,
             temperature=self.temperature,
@@ -57,7 +56,6 @@ class LLMChatOllama(AbstractLanguageModel):
             keep_alive=self.keep_alive,
         )
 
-    # written by Lorenzo Paleari
     def load_model(self, device: str = None) -> None:
         """
         Load the language model locally.
@@ -67,7 +65,6 @@ class LLMChatOllama(AbstractLanguageModel):
         """
         pass
 
-    # written by Lorenzo Paleari
     def unload_model(self) -> None:
         """
         Unload the language model locally.
@@ -85,19 +82,18 @@ class LLMChatOllama(AbstractLanguageModel):
             response, method="json_schema"
         )
 
-    # modified by Lorenzo Paleari
     def query(
         self, query: str, num_query: int = 1
     ) -> str:
         """
-        Query the OpenAI model for responses.
+        Query the Ollama model for responses.
 
         :param query: The prompt that is going to be used as query to the language model.
         :type query: str
         :param num_query: The number of queries to be posed to the language model for each prompt. Defaults to 1.
         :type num_query: int
-        :return: Response(s) from the OpenAI model.
-        :rtype: List[ChatCompletion]
+        :return: Response(s) from the Ollama model.
+        :rtype: str
         """
         if self.cache and query in self.response_cache:
                 self.logger.debug(f"Used cache for query: {query}")
@@ -118,7 +114,7 @@ class LLMChatOllama(AbstractLanguageModel):
         """
         Extract the response texts from the query response.
 
-        :param query_response: The response dictionary (or list of dictionaries) from the OpenAI model.
+        :param query_response: The response dictionary (or list of dictionaries) from the Ollama model.
         :type query_response: Union[List[ChatCompletion], ChatCompletion]
         :return: List of response strings.
         :rtype: List[str]
