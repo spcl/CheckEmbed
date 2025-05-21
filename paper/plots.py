@@ -10,16 +10,15 @@
 # Robert Gerstenberger
 
 
-import os
-import csv
 import json
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import math
-import numpy as np
-
+import os
 from decimal import Decimal
 from typing import Dict, List, Optional
+
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import numpy as np
 from scipy.stats import pearsonr, spearmanr
 
 
@@ -32,9 +31,12 @@ def read_json_file(filename):
 
 
 # written by Patrick Iff
-def read_file_base(path, method, metric, emb_model):
+def read_file_base(path, method, metric):
     data = read_json_file(path)
     results = []
+    if "judge" in path:
+        results = [int(value)/100.0 for value in data["data"]]
+        return results
     for entry in data["data"]:
         metric_map_score = {"bert" : "frobenius_norm", "scgpt_bert" : "passage_score", "scgpt_nli" : "passage_score", "ce" : "frob_norm_cosine_sim", "ce_got" : "frob_norm_cosine_sim"}
         metric_map_std_dev = {"bert" : "std_dev", "scgpt_bert" : "std_dev", "scgpt_nli" : "std_dev", "ce" : "std_dev_cosine_sim", "ce_got" : "std_dev_cosine_sim"}
@@ -46,27 +48,30 @@ def read_file_base(path, method, metric, emb_model):
 
 
 # written by Patrick Iff
-def read_file(error, model, method, emb_model, metric, file):
+def read_file(error, model, method, emb_model, judge, metric, file):
     dir1 = file
     dir2 = ("error_%d" % error) if type(error) is int else error
-    dir3 = {"bert" : "BertScore", "scgpt_bert" : "SelfCheckGPT", "scgpt_nli": "SelfCheckGPT", "ce" : "CheckEmbed", "ce_got" : "CheckEmbed_self"}[method]
+    dir3 = {"bert" : "BertScore", "scgpt_bert" : "SelfCheckGPT", "scgpt_nli": "SelfCheckGPT", "judge": "Judge", "ce" : "CheckEmbed", "ce_got" : "CheckEmbed_self"}[method]
     emb_model2 = {"gpt" : "gpt-embedding-large_results", "sfr" : "sfr-embedding-mistral_results", "e5" : "e5-mistral-7B-instruct_results", "gte" : "gte-qwen1.5-7B-instruct_results", "ste400": "stella-en-400M-v5_results", "ste1.5": "stella-en-1.5B-v5_results",  None : ""}[emb_model]
-    file = model + "_" + {"bert" : "bert", "scgpt_bert": "selfcheckgpt_BertScore", "scgpt_nli": "selfcheckgpt_NLI", "ce" : emb_model2, "ce_got" : emb_model2}[method] + ".json"
+    judge_model = {"4o": "4o", "4o-mini": "4o-mini", "llama70b": "llama70b", "llama8b": "llama8b"}[judge]
+    file = model + "_" + {"bert" : "bert", "scgpt_bert": "selfcheckgpt_BertScore", "scgpt_nli": "selfcheckgpt_NLI", "judge": "judge", "ce" : emb_model2, "ce_got" : emb_model2}[method] + ".json"
+    if method == "judge":
+        file = judge_model + "_" + model + "_" + method + ".json"
     path = "results/%s/%s/%s/%s" % (dir1, dir2, dir3, file)
     # Hack
     if error == "ground_truth" and method == "ce_got":
         path = path.replace("CheckEmbed_self", "CheckEmbed")
-    return read_file_base(path, method, metric, emb_model)
+    return read_file_base(path, method, metric)
 
 
 # written by Patrick Iff
-def read_all_files(model, emb_model, metric, file, methods = ["bert", "scgpt_bert", "scgpt_nli", "ce"]):
+def read_all_files(model, emb_model, judge, metric, file, methods = ["bert", "scgpt_bert", "scgpt_nli", "judge", "ce"]):
     errors = ["ground_truth"] + list(range(1, 11))
     data = {}
     for error in errors:
         data[error] = {}
         for method in methods:
-            sub_data =  read_file(error, model, method, emb_model, metric, file)
+            sub_data =  read_file(error, model, method, emb_model, judge, metric, file)
             if len(sub_data) > 0:
                 data[error][method] = sub_data
     return data
@@ -89,12 +94,17 @@ def do_plot(ax, values, xpos, col):
 def read_description_file(typ, method, model, mode, emb_model):
     dir1 = "description/%s" % typ
     dir1 += "" if typ == "different" else ("/" + mode)
-    dir2 = {"bert" : "BertScore", "scgpt" : "SelfCheckGPT", "ce" : "CheckEmbed"}[method]
-    emb_model_2 = {"gpt" : "gpt-embedding-large_results", "sfr" : "sfr-embedding-mistral_results", "e5" : "e5-mistral-7B-instruct_results", "gte" : "gte-qwen1.5-7B-instruct_results", "ste400": "stella-en-400M-v5_results", "ste1.5": "stella-en-1.5B-v5_results", "bert": "selfcheckgpt_BertScore", "nli": "selfcheckgpt_NLI",  None : ""}[emb_model]
-    file = model + "_" + {"bert" : "bert", "scgpt" : emb_model_2, "ce" : emb_model_2}[method] + ".json"
+    dir2 = {"bert" : "BertScore", "scgpt" : "SelfCheckGPT", "ce" : "CheckEmbed", "judge": "Judge"}[method]
+    emb_model_2 = {"gpt" : "gpt-embedding-large_results", "sfr" : "sfr-embedding-mistral_results", "e5" : "e5-mistral-7B-instruct_results", "gte" : "gte-qwen1.5-7B-instruct_results", "ste400": "stella-en-400M-v5_results", "ste1.5": "stella-en-1.5B-v5_results", "bert": "selfcheckgpt_BertScore", "nli": "selfcheckgpt_NLI", "4o": "4o", "4o-mini": "4o-mini", "llama70b": "llama70b", "llama8b": "llama8b", None: ""}[emb_model]
+    file = model + "_" + {"bert" : "bert", "scgpt" : emb_model_2, "ce" : emb_model_2, "judge": "judge"}[method] + ".json"
+    if method == "judge":
+        file = emb_model_2 + "_" + model + "_" + method + ".json"
     path = "results/%s/%s/%s" % (dir1, dir2, file)
     data = read_json_file(path)
     results = []
+    if method == "judge":
+        results = [int(value)/100.0 for value in data["data"]]
+        return results
     for entry in data["data"]:
         score = entry[{"bert" : "frobenius_norm", "scgpt" : "passage_score", "ce" : "frob_norm_cosine_sim"}[method]]
         results.append(score)
@@ -105,15 +115,16 @@ def read_description_file(typ, method, model, mode, emb_model):
 # written by Patrick Iff
 def read_all_description_files(mode):
     types = ["different","similar"]
-    methods = ["bert","scgpt","ce"]
+    methods = ["bert","scgpt","ce","judge"]
     models = ["gpt","gpt4-turbo","gpt4-o"]
     embedding_models = ["gpt","sfr","e5","gte","ste400","ste1.5"]
     scgp_methods = ["bert","nli"]
+    judge_models = ["4o","4o-mini","llama70b","llama8b"]
     data = {}
     for model in models:
         data[model] = {}
         for method in methods:
-            emb_models = embedding_models if method == "ce" else scgp_methods if method == "scgpt" else [None]
+            emb_models = embedding_models if method == "ce" else scgp_methods if method == "scgpt" else judge_models if method == "judge" else [None]
             for emb_model in emb_models:
                 method_label = method + ("_" + emb_model if emb_model is not None else "")
                 data[model][method_label] = {}
@@ -124,7 +135,7 @@ def read_all_description_files(mode):
 
 # Create violin plot
 # written by Patrick Iff
-def plot_description(mode):
+def plot_description(mode, gpt4o_only = False):
     # Config
     colors = {"different" : "#990000", "similar" : "#009900"}
     method_labels = {
@@ -132,6 +143,10 @@ def plot_description(mode):
         "scgpt" : "SelfCheckGPT",
         "scgpt_bert" : "SelfCheckGPT (BERT)",
         "scgpt_nli" : "SelfCheckGPT (NLI)",
+        "judge_4o" : "LLM-as-a-Judge (GPT-4o)",
+        "judge_4o-mini" : "LLM-as-a-Judge (GPT-4o-mini)",
+        "judge_llama70b" : "LLM-as-a-Judge (LLaMA-70B)",
+        "judge_llama8b" : "LLM-as-a-Judge (LLaMA-8B)",
         "ce" : "CheckEmbed",
         "ce_gpt" : "CheckEmbed (GPT)",
         "ce_sfr" : "CheckEmbed (SFR)",
@@ -144,10 +159,12 @@ def plot_description(mode):
     # Read data
     data = read_all_description_files(mode)
     # Create plot
-    (fig, ax) = plt.subplots(1, 3, figsize=(18, 5))
-    fig.subplots_adjust(left=0.065, right=0.99, top=0.925, bottom=0.25, wspace=0.05)
+    (fig, ax) = plt.subplots(1, 1 if gpt4o_only else  3, figsize=(4 if gpt4o_only else 12, 5))
+    if type(ax) is not np.ndarray:
+        ax = [ax]
+    fig.subplots_adjust(left=0.18 if gpt4o_only else 0.065, right=0.99, top=0.925, bottom=0.25, wspace=0.05)
     # Iterate through data
-    for (i, model) in enumerate(data.keys()):
+    for (i, model) in enumerate((["gpt4-o"] if gpt4o_only else data.keys())):
         legend_patches = set()
         for (j, method) in enumerate(data[model].keys()):
             for (k, typ) in enumerate(data[model][method].keys()):
@@ -182,7 +199,8 @@ def plot_description(mode):
         legend_patches = [mpatches.Patch(color=col, label=lab, alpha = 0.5) for (col, lab) in legend_patches]
         ax[i].legend(handles=list(legend_patches), loc='upper left', fontsize=9)
     # Save plot
-    plt.savefig("plot_eval_violins_gpt_%s.pdf" % mode)
+    #plt.savefig("plot_eval_violins_gpt_%s.png" % mode, format='png', dpi=600)
+    plt.savefig("plot_eval_violins_gpt_%s%s.pdf" % (mode , "_gpt4o" if gpt4o_only else ""))
 
 
 # Read all files containing results
@@ -191,17 +209,18 @@ def plot_description(mode):
 def read_all_description_files2():
     modes = ["generic", "precise"]
     types = ["different","similar"]
-    methods = ["bert","scgpt","ce"]
+    methods = ["bert","scgpt","judge","ce"]
     models = ["gpt","gpt4-turbo","gpt4-o"]
     embedding_models = ["gpt","sfr","e5","gte","ste400","ste1.5"]
     scgp_methods = ["bert","nli"]
+    judge_models = ["4o","4o-mini","llama70b","llama8b"]
     data = {}
     for mode in modes:
         data[mode] = {}
         for model in models:
             data[mode][model] = {}
             for method in methods:
-                emb_models = embedding_models if method == "ce" else scgp_methods if method == "scgpt" else [None]
+                emb_models = embedding_models if method == "ce" else scgp_methods if method == "scgpt" else judge_models if method == "judge" else [None]
                 for emb_model in emb_models:
                     method_label = method + ("_" + emb_model if emb_model is not None else "")
                     data[mode][model][method_label] = {}
@@ -221,6 +240,10 @@ def plot_description_combined():
         "scgpt" : "SelfCheckGPT",
         "scgpt_bert" : "SelfCheckGPT (BERT)",
         "scgpt_nli" : "SelfCheckGPT (NLI)",
+        "judge_4o" : "LLM-as-a-Judge (GPT-4o)",
+        "judge_4o-mini" : "LLM-as-a-Judge (GPT-4o-mini)",
+        "judge_llama70b" : "LLM-as-a-Judge (LLaMA-70B)",
+        "judge_llama8b" : "LLM-as-a-Judge (LLaMA-8B)",
         "ce" : "CheckEmbed",
         "ce_gpt" : "CheckEmbed (GPT)",
         "ce_sfr" : "CheckEmbed (SFR)",
@@ -289,21 +312,12 @@ def plot_description_combined():
 
 
 # written by Patrick Iff
-def plot_hallucination(model, emb_model, metric, input_path, output_prefix):
+def plot_hallucination(model, emb_model, judge, metric):
     # Config
-    colors = {"bert" : "#999900", "scgpt_bert" : "#990099", "scgpt_nli": "#009999" ,"ce" : "#000099", "ce_got" : "#000099"}
-    ce_labels = {
-        "gpt" : "CheckEmbed (GPT)",
-        "sfr" : "CheckEmbed (SFR)",
-        "e5" : "CheckEmbed (E5)",
-        "gte" : "CheckEmbed (GTE)",
-        "ste400" : "CheckEmbed (STE400)",
-        "ste1.5" : "CheckEmbed (STE1.5)"
-        }
-
-    method_labels = {"GOT" : "GOT", "bert" : "BERTScore", "scgpt_bert" : "SelfCheckGPT (BERT)", "scgpt_nli": "SelfCheckGPT (NLI)", "ce" : ce_labels[emb_model], "ce_got" : ce_labels[emb_model]}
+    colors = {"bert" : "#999900", "scgpt_bert" : "#990099", "scgpt_nli": "#009999" ,"ce" : "#000099", "ce_got" : "#000099", "judge": "#990000"}
+    method_labels = {"GOT" : "GOT", "bert" : "BERTScore", "scgpt_bert" : "SelfCheckGPT (BERT)", "scgpt_nli": "SelfCheckGPT (NLI)", "ce" : "CheckEmbed (STE1.5)", "ce_got" : "CheckEmbed", "judge": "LLM-as-a-Judge (LLaMA-8B)"}
     # Read data
-    data = read_all_files(model, emb_model, metric, input_path)
+    data = read_all_files(model, emb_model, judge, metric, "incremental_forced_hallucination/scientific_descriptions")
     # Create plot
     (fig, ax) = plt.subplots(1, 1, figsize=(9, 3.25))
     fig.subplots_adjust(left=0.08, right=0.99, top=0.9, bottom=0.135)
@@ -322,7 +336,7 @@ def plot_hallucination(model, emb_model, metric, input_path, output_prefix):
     # Configure plot
     ax.set_xlim(-1,xpos+1)
     ax.grid(axis = "y")
-    ax.set_xlabel(" " * 17 + "Number of introduced errors")
+    ax.set_xlabel(" " * 17 + "Error")
     if metric == "score":
         ax.set_ylim(0,1)
         ax.set_ylabel("Score (higher: assessed as more similar)")
@@ -337,9 +351,10 @@ def plot_hallucination(model, emb_model, metric, input_path, output_prefix):
     # Create legend
     legend_patches = [mpatches.Patch(color=col, label=lab, alpha = 0.5) for (col, lab) in legend_patches]
     legend_patches = sorted(legend_patches, key=lambda x: list(method_labels.values()).index(x.get_label()))
-    ax.legend(handles=list(legend_patches), loc='lower center', fontsize=9, ncol = 5, bbox_to_anchor=(0.5, 0.985), frameon=False)
+    ax.legend(handles=list(legend_patches), loc='lower center', fontsize=9, ncol = 5, bbox_to_anchor=(0.5, 0.985))
 
-    plt.savefig("%s_%s_%s_%s.pdf" % (output_prefix, model, emb_model, metric))
+    #plt.savefig("plot_halucinate_%s_%s_%s.png" % (model, emb_model, metric), format='png', dpi=600)
+    plt.savefig("plot_halucinate_%s_%s_%s.pdf" % (model, emb_model, metric))
 
 
 # written by Robert Gerstenberger
@@ -540,7 +555,7 @@ def plot_runtime(filename_in, filename_out, folders, methods, ce_models, scgpt_m
 
 
 # written by Lorenzo Paleari
-def load_data(curr_dir: str):
+def load_data(curr_dir: str, sample_accuracy: bool = False):
     # Read data
     passage_scores = None
     with open(os.path.join(curr_dir, "data", "passage_scores.json"), "r") as f:
@@ -548,10 +563,19 @@ def load_data(curr_dir: str):
 
     scgpt_ce = None
     scgpt_nli = None
+    judge_scores = {}
+    judge_scores_ref = {}
     with open(os.path.join(curr_dir, "20_samples", "SelfCheckGPT", "wikibio_selfcheckgpt_BertScore.json"), "r") as f:
         scgpt_ce = [value["passage_score"] for value in json.load(f)["data"]]
     with open(os.path.join(curr_dir, "20_samples", "SelfCheckGPT", "wikibio_selfcheckgpt_NLI.json"), "r") as f:
         scgpt_nli = [value["passage_score"] for value in json.load(f)["data"]]
+    for m in ["4o", "4o-mini", "llama70b", "llama8b"]:
+        with open(os.path.join(curr_dir, "Judge", f"{m}_judge.json"), "r") as f:
+            judge_scores[m] = json.load(f)["data"]
+            judge_scores[m] = [int(value)/100.0 for value in judge_scores[m]]
+        with open(os.path.join(curr_dir, "Judge", f"{m}_judge_ref.json"), "r") as f:
+            judge_scores_ref[m] = json.load(f)["data"]
+            judge_scores_ref[m] = [int(value)/100.0 for value in judge_scores_ref[m]]
 
     check_embed_scores = {}
     for i in range(2, 22, 2):
@@ -570,8 +594,10 @@ def load_data(curr_dir: str):
     bert_score = None
     with open(os.path.join(curr_dir, "20_samples", "BertScore", "wikibio_bert.json"), "r") as f:
         bert_score = [value["frobenius_norm"] for value in json.load(f)["data"]]
-
-    return passage_scores, scgpt_ce, scgpt_nli, check_embed_scores, bert_score
+    
+    if sample_accuracy:
+        return passage_scores, scgpt_ce, scgpt_nli, check_embed_scores, bert_score
+    return passage_scores, scgpt_ce, scgpt_nli, check_embed_scores, bert_score, judge_scores, judge_scores_ref
 
 
 # written by Lorenzo Paleari
@@ -592,7 +618,7 @@ def plot_samples_accuracy(dir: str, output_name: str):
         "gte-qwen1.5-7B-instruct": ("GTE", "#996600", "d"),
     }
 
-    passage_scores, _, _, check_embed_scores, _ = load_data(dir)
+    passage_scores, _, _, check_embed_scores, _ = load_data(dir, sample_accuracy=True)
     embedding_methods = list(next(iter(check_embed_scores.values())).keys())
 
     accuracy = {}
@@ -626,7 +652,7 @@ def plot_samples_accuracy(dir: str, output_name: str):
 
 # written by Lorenzo Paleari
 def plot_wiki_bio(curr_dir: str, output_name: str):
-    passage_scores, scgpt_ce, scgpt_nli, check_embed_scores, bert_score = load_data(curr_dir)
+    passage_scores, scgpt_ce, scgpt_nli, check_embed_scores, bert_score, judge_scores, judge_scores_ref = load_data(curr_dir)
 
     # Create Markdown table
     # embedding_methods = list(next(iter(check_embed_scores.values())).keys())
@@ -652,15 +678,29 @@ def plot_wiki_bio(curr_dir: str, output_name: str):
     scgpt_p_ce, scgpt_s_ce = compute_final_value(passage_scores, scgpt_ce)
     scgpt_p_nli, scgpt_s_nli = compute_final_value(passage_scores, scgpt_nli)
     bert_p, bert_s = compute_final_value(passage_scores, bert_score)
+    judge_p, judge_s = {}, {}
+    judge_ref_p, judge_ref_s = {}, {}
+    for m in ["4o", "4o-mini", "llama70b", "llama8b"]:
+        judge_p[m], judge_s[m] = compute_final_value(passage_scores, judge_scores[m])
+        judge_ref_p[m], judge_ref_s[m] = compute_final_value(passage_scores, judge_scores_ref[m])
 
     # Add SCGPT row
     scgpt_row_ce = f"| {scgpt_p_ce:.1f} | {scgpt_s_ce:.1f} |"
     scgpt_row_nli = f"| {scgpt_p_nli:.1f} | {scgpt_s_nli:.1f} |"
     bert_row = f"| {bert_p:.1f} | {bert_s:.1f} |"
+    judge_row = {}
+    judge_ref_row = {}
+    for m in ["4o", "4o-mini", "llama70b", "llama8b"]:
+        judge_row[m] = f"| {judge_p[m]:.1f} | {judge_s[m]:.1f} |"
+        judge_ref_row[m] = f"| {judge_ref_p[m]:.1f} | {judge_ref_s[m]:.1f} |"
+    
 
     rows.append("| SCGPT_BertScore " + scgpt_row_ce)
     rows.append("| SCGPT_NLI " + scgpt_row_nli)
     rows.append("| BertScore " + bert_row)
+    for m in ["4o", "4o-mini", "llama70b", "llama8b"]:
+        rows.append(f"| LLM-as-a-Judge ({m}) " + judge_row[m])
+        rows.append(f"| LLM-as-a-Judge w/reference ({m}) " + judge_ref_row[m])
 
     # Add rows for CheckEmbed scores for 2 to 20 samples
     for sample_key, sample_scores in check_embed_scores.items():
@@ -718,20 +758,18 @@ plot_heatmap(
     "heatmap_combined_gpt4_stella.pdf"
 )
 
-plot_hallucination(
-    "gpt4-o",
-    "gte",
-    "score",
-    "incremental_forced_hallucination/legal_summaries",
-    "plot_hallucinate_legal"
+plot_heatmap(
+    "results/legal_definitions/CheckEmbed/gpt4-o_gpt-embedding-large_results.json",
+    "results/legal_definitions/BertScore/gpt4-o_bert.json",
+    [0, 15],
+    "heatmap_combined_gpt4o_gpt-embedding-large.pdf"
 )
 
 plot_hallucination(
     "gpt4-o",
-    "ste1.5",
+    "gte",
+    "llama8b",
     "score",
-    "incremental_forced_hallucination/scientific_descriptions",
-    "plot_hallucinate_scientific"
 )
 
 plot_runtime(
