@@ -13,7 +13,9 @@ import json
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../"))
 
-from CheckEmbed.operations import CheckEmbedOperation
+from langchain.prompts import PromptTemplate
+
+from CheckEmbed.operations import CheckEmbedOperation, LLMAsAJudgeOperation
 from CheckEmbed import language_models
 from CheckEmbed import embedding_models
 from CheckEmbed.parser import Parser
@@ -21,6 +23,26 @@ from CheckEmbed.scheduler import Scheduler, StartingPoint
 
 from examples.incremental_forced_hallucination.operation_variants import CheckEmbedOperation_Variant, \
     BertScoreOperation_Variant, SelfCheckGPT_BERT_Operation_Variant, SelfCheckGPT_NLI_Operation_Variant
+
+prompt_template = PromptTemplate(
+    input_variables=["summary", "original"],
+    template="""
+### INSTRUCTION ###
+
+You are a linguistic and law expert. You will be given a summary of part of a legal document and the original as well. Your job is to rate how accurate and not hallucinated the summary is based on the content of the original passage. You will need to output a score from 0 to 100, where 0 means the summary is completely hallucinated, and 100 means the summary is completely accurate.
+
+### OUTPUT ###
+
+The output should be a single number, which is the score from 0 to 100.
+You CANNOT output any other text. You CANNOT output a decimal number. You MUST output an integer number. You MUST NOT output a number that is less than 0 or greater than 100.
+
+### INPUT ###
+{summary}
+
+### ORIGINAL PASSAGE ###
+{original}
+""",
+)
 
 class CustomParser(Parser):
     """
@@ -168,6 +190,34 @@ def start(current_dir: str, ground_truth_gen: bool = False, error_number: int = 
         cache = True,
     )
 
+    gpt4_o_2 = language_models.ChatGPT(
+        config_path,
+        model_name = "chatgpt4-o",
+        cache = True,
+        temperature = 0.1,
+    )
+
+    gpt4_o_mini = language_models.ChatGPT(
+        config_path,
+        model_name = "chatgpt4-o-mini",
+        cache = False,
+        temperature = 0.1,
+    )
+
+    llama70 = language_models.LLMChatOllama(
+        config_path,
+        model_name = "llama70",
+        cache = False,
+        temperature = 0.1,
+    )
+
+    llama8 = language_models.LLMChatOllama(
+        config_path,
+        model_name = "llama8",
+        cache = False,
+        temperature = 0.1,
+    )
+
     embedd_large = embedding_models.EmbeddingGPT(
         config_path,
         model_name = "gpt-embedding-large",
@@ -194,16 +244,23 @@ def start(current_dir: str, ground_truth_gen: bool = False, error_number: int = 
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        model_name = "NovaSearch/stella_en_1.5B_v5",
+        model_name = "dunzhang/stella_en_1.5B_v5",
         variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        model_name = "NovaSearch/stella_en_400M_v5",
+        model_name = "dunzhang/stella_en_400M_v5",
         cache = False,
     )
 
+    llm_judge_Operation = LLMAsAJudgeOperation(
+        os.path.join(current_dir, "Judge"),
+        current_dir,
+        prompt_template = prompt_template,
+        original = os.path.join(current_dir, "../../dataset/judge_original.json"),
+        original_position = 1,
+    )
 
     # Initialize BERTScore, SelfCheckGPT and CheckEmbedOperation operations
     bertOperation = None if ground_truth_gen else BertScoreOperation_Variant(
@@ -245,6 +302,8 @@ def start(current_dir: str, ground_truth_gen: bool = False, error_number: int = 
         bertScoreOperation = bertOperation,
         selfCheckGPTOperation = selfCheckGPTOperation,
         checkEmbedOperation = checkEmbedOperation,
+        llm_as_a_judge_Operation=llm_judge_Operation,
+        llm_as_a_judge_models = [gpt4_o_mini, gpt4_o_2, llama70, llama8],
     )
 
     # The order of lm_names and embedding_lm_names should be the same 
@@ -253,6 +312,7 @@ def start(current_dir: str, ground_truth_gen: bool = False, error_number: int = 
         startingPoint = start,
         bertScore = True,
         selfCheckGPT = True,
+        llm_as_a_judge= True,
         ground_truth = ground_truth_gen,
         spacy_separator = True,
         rebase_results=True,
@@ -263,6 +323,13 @@ def start(current_dir: str, ground_truth_gen: bool = False, error_number: int = 
     )
 
 if __name__ == "__main__":
+    with open(os.path.dirname(os.path.abspath(__file__)) + "/dataset/legal_definitions.json", "r") as f:
+        data = json.load(f)["data"]
+
+    with open(os.path.dirname(os.path.abspath(__file__)) + "/dataset/judge_original.json", "w") as f:
+        json.dump({"data": [d["chunk_txt"] for d in data]}, f, indent=4)
+
+    exit(0)
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/ground_truth"
     os.makedirs(current_dir, exist_ok=True)
     os.makedirs(current_dir + "/CheckEmbed_Self", exist_ok=True)

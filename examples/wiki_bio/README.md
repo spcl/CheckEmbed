@@ -20,3 +20,5 @@ The estimated compute time for running the evaluation is approximately 36 hours 
 The sample step is skipped, since the samples are already provided in the dataset. Cost only occur for the embedding with the OpenAI models.
 
 The embedding model from OpenAI has a cost of $0.13 / 1M tokens, which results in an approximate cost of $0.65 for the evaluation of this example.
+
+LLM-as-a-judge models will result in a cost of $1.

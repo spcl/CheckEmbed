@@ -22,5 +22,8 @@ The samples have been generated with a temperature of 0.25. The temperature can 
 We estimate a compute time of 20 hours with an NVIDIA GH200.
 
 The total estimated costs are $35:
+
 - GPT4-o: $33
 - GPT3.5: $2
+
+Running LLM-as-a-Judge will result in an additional cost of no more than $2.
