@@ -58,7 +58,7 @@ topics_list = [
 ]
 
 prompt_template = PromptTemplate(
-    input_variables=["passage"],
+    input_variables=["aaa"],
     template="""
 ### INSTRUCTION ###
 
@@ -70,7 +70,7 @@ The output should be a single number, which is the score from 0 to 100.
 You CANNOT output any other text. You CANNOT output a decimal number. You MUST output an integer number. You MUST NOT output a number that is less than 0 or greater than 100.
 
 ### INPUT ###
-{passage}
+{aaa}
 """,
 )
 

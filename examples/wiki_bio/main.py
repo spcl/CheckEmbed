@@ -17,7 +17,7 @@ from CheckEmbed.scheduler import Scheduler, StartingPoint
 from CheckEmbed.operations import SelfCheckGPT_BERT_Operation, SelfCheckGPT_NLI_Operation, LLMAsAJudgeOperation
 
 prompt_template = PromptTemplate(
-    input_variables=["passage"],
+    input_variables=["aaa"],
     template="""
 ### INSTRUCTION ###
 
@@ -32,12 +32,12 @@ You MUST output an integer number.
 You MUST NOT output a number that is less than 0 or greater than 100.
 
 ### INPUT ###
-{passage}
+{aaa}
 """,
 )
 
 prompt_template_with_ref = PromptTemplate(
-    input_variables=["passage"],
+    input_variables=["aaa", "bbb"],
     template="""
 ### INSTRUCTION ###
 
@@ -53,10 +53,10 @@ You MUST NOT output a number that is less than 0 or greater than 100.
 
 ### INPUT ###
 **Passage**:
-{passage}
+{aaa}
 
 **Original**:
-{original}
+{bbb}
 """,
 )
 
