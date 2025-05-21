@@ -6,15 +6,16 @@
 #
 # main author: Lorenzo Paleari
 
-import os
 import json
-
+import os
 from typing import Any
 
-from CheckEmbed.operations import Operation
-from CheckEmbed.language_models import ChatGPT
 from langchain.prompts import PromptTemplate
 from pydantic import BaseModel, Field
+
+from CheckEmbed.language_models import ChatGPT
+from CheckEmbed.operations import Operation
+
 
 class Score(BaseModel):
     score: int = Field(description="The score from 0 to 100")
@@ -59,13 +60,19 @@ class LLMAsAJudgeOperation(Operation):
         if not isinstance(model, ChatGPT):
             model.add_structured_output(Score)
 
+        original_data = None
         if self.original is not None:
-            with open(self.result_dir_path + self.original, "r") as f:
-                original_data = json.load(f)["data"]
+            if self.original.endswith(".json"):
+                with open(self.result_dir_path + self.original, "r") as f:
+                    original_data = json.load(f)["data"]
 
         # For every language model
         for file in os.listdir(self.answer_dir_path):
             if "samples.json" in file and not file.startswith("ground_truth_"):
+
+                if self.original is not None and original_data is None:
+                     with open(self.result_dir_path + "/" + self.original + f"/{file.split('_')[0]}_original.json", "r") as f:
+                        original_data = json.load(f)["data"]
                 
                 name = model.name + "_" + file.split("_")[0]
                 if name.startswith("gpt4-o"):
@@ -118,6 +125,10 @@ class LLMAsAJudgeOperation(Operation):
                         results.append(result)
 
                 # Store the results
+                if self.reference_txt is not None:
+                    with open(os.path.join(self.result_dir_path, name + "_judge_ref.json"), "w") as f:
+                        json.dump({"data": results}, f, indent=4)
+                    return
                 with open(os.path.join(self.result_dir_path, name + "_judge.json"), "w") as f:
                     json.dump({"data": results}, f, indent=4)
 
