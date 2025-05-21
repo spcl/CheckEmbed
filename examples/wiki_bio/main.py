@@ -10,11 +10,57 @@ import logging
 import json
 import os
 
-from CheckEmbed import embedding_models
-from CheckEmbed.scheduler import Scheduler, StartingPoint
-from CheckEmbed.operations import SelfCheckGPT_BERT_Operation, SelfCheckGPT_NLI_Operation
+from langchain.prompts import PromptTemplate
 
-def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = False) -> None:
+from CheckEmbed import embedding_models, language_models
+from CheckEmbed.scheduler import Scheduler, StartingPoint
+from CheckEmbed.operations import SelfCheckGPT_BERT_Operation, SelfCheckGPT_NLI_Operation, LLMAsAJudgeOperation
+
+prompt_template = PromptTemplate(
+    input_variables=["aaa"],
+    template="""
+### INSTRUCTION ###
+
+You are a linguistic and historian expert. You will be given a passage of text containing a brief biography of a famous person. Your job is to rate how hallucinated the biography is. You will need to output a score from 0 to 100, where 0 means the biography is completely hallucinated, and 100 means the biography is completely correct. Use the full range of scores, 0, 1, 2, ... 10, 20, ... 90, 100.
+
+### OUTPUT ###
+
+The output should be a single number, which is the score from 0 to 100.
+You CANNOT output any other text.
+You CANNOT output a decimal number.
+You MUST output an integer number.
+You MUST NOT output a number that is less than 0 or greater than 100.
+
+### INPUT ###
+{aaa}
+""",
+)
+
+prompt_template_with_ref = PromptTemplate(
+    input_variables=["aaa", "bbb"],
+    template="""
+### INSTRUCTION ###
+
+You are a linguistic and historian expert. You will be given a passage of text containing a brief biography of a famous person, you will also be given the complete original biography of the same famous person. Your job is to rate how hallucinated the biography is compared to the original, longer, one. You will need to output a score from 0 to 100, where 0 means the biography is completely hallucinated, and 100 means the biography is completely correct. Use the full range of scores, 0, 1, 2, ... 10, 20, ... 90, 100. The original biography is always longer, this should be not taken into account as hallucination.
+
+### OUTPUT ###
+
+The output should be a single number, which is the score from 0 to 100.
+You CANNOT output any other text.
+You CANNOT output a decimal number.
+You MUST output an integer number.
+You MUST NOT output a number that is less than 0 or greater than 100.
+
+### INPUT ###
+**Passage**:
+{aaa}
+
+**Original**:
+{bbb}
+""",
+)
+
+def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = False, llm_as_a_judge: bool = False, llm_as_a_judge_with_ref: bool = False) -> None:
     """
     Start the main function.
 
@@ -22,14 +68,25 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
     :type current_dir: str
     :param start: The starting point. Defaults to StartingPoint.PROMPT.
     :type start: StartingPoint
-    :param not_ce: Flag to indicate whether we execute the CheckEmbed operation. Defaults to False.
+    :param not_ce: Flag to indicate whether to execute the CheckEmbed operation. Defaults to False.
     :type not_ce: bool
+    :param llm_as_a_judge: Flag to indicate whether to execute the LLMAsAJudge operation. Defaults to False.
+    :type llm_as_a_judge: bool
+    :param llm_as_a_judge_with_ref: Flag to indicate whether to execute the LLMAsAJudge operation with a reference version. Defaults to False.
+    :type llm_as_a_judge_with_ref: bool
     """
 
     # Config file for the LLM(s)
     config_path = os.path.join(
             current_dir,
-            "../../../../../CheckEmbed/config.json",
+            "../../../CheckEmbed/config.json",
+        )
+    
+    if llm_as_a_judge or llm_as_a_judge_with_ref:
+        # Config file for the LLM(s)
+        config_path = os.path.join(
+            current_dir,
+            "../../CheckEmbed/config.json",
         )
     
     selfCheckGPT_BERT_Operation = SelfCheckGPT_BERT_Operation(
@@ -40,6 +97,49 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
     selfCheckGPT_NLI_Operation = SelfCheckGPT_NLI_Operation(
         os.path.join(current_dir, "SelfCheckGPT"),
         os.path.join(current_dir, "SCGPT_samples"),
+    )
+
+    llm_judge_Operation = LLMAsAJudgeOperation(
+        os.path.join(current_dir, "Judge"),
+        current_dir,
+        prompt_template = prompt_template,
+    )
+
+    llm_judge_Operation_with_ref = LLMAsAJudgeOperation(
+        os.path.join(current_dir, "Judge"),
+        current_dir,
+        prompt_template = prompt_template_with_ref,
+        original = os.path.join(current_dir, "../original_samples.json"),
+        original_position = 1,
+        reference_txt = "ref",
+    )
+
+    gpt4_o = language_models.ChatGPT(
+        config_path,
+        model_name = "chatgpt4-o",
+        cache = True,
+        temperature = 0.1,
+    )
+
+    gpt4_o_mini = language_models.ChatGPT(
+        config_path,
+        model_name = "chatgpt4-o-mini",
+        cache = False,
+        temperature = 0.1,
+    )
+
+    llama70 = language_models.LLMChatOllama(
+        config_path,
+        model_name = "llama70",
+        cache = False,
+        temperature = 0.1,
+    )
+
+    llama8 = language_models.LLMChatOllama(
+        config_path,
+        model_name = "llama8",
+        cache = False,
+        temperature = 0.1,
     )
 
     embedd_large = embedding_models.EmbeddingGPT(
@@ -83,15 +183,18 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
         budget = 30,
         selfCheckGPTOperation = [selfCheckGPT_BERT_Operation, selfCheckGPT_NLI_Operation],
         embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct, stella_en_400M_v5, stella_en_15B_v5],
+        llm_as_a_judge_Operation = llm_judge_Operation if llm_as_a_judge else llm_judge_Operation_with_ref,
+        llm_as_a_judge_models = [gpt4_o_mini, gpt4_o, llama70, llama8],
     )
 
     # The order of lm_names and embedding_lm_names should be the same
     # as the order of the language models and embedding language models respectively.
     scheduler.run(
         startingPoint = start,
-        selfCheckGPT = not_ce,
-        checkEmbed = not not_ce,
-        bertScore = not_ce,
+        selfCheckGPT = not_ce and not llm_as_a_judge and not llm_as_a_judge_with_ref,
+        llm_as_a_judge = llm_as_a_judge or llm_as_a_judge_with_ref,
+        checkEmbed = not not_ce and not llm_as_a_judge and not llm_as_a_judge_with_ref,
+        bertScore = not_ce and not llm_as_a_judge and not llm_as_a_judge_with_ref,
         rebase_results = True,
         reference_text = True,
         lm_names = ["wikibio"], # Override the language model names
@@ -118,7 +221,7 @@ def prepare_data(current_dir: str) -> None:
         if i == 20:
             os.makedirs(current_dir + "/SCGPT_samples", exist_ok=True)
 
-            with open(os.path.join(current_dir, "../..", "data", "dataset.json")) as f:
+            with open(os.path.join(current_dir, "..", "data", "dataset.json")) as f:
                 data: dict = json.load(f)
 
             scgpt = []
@@ -142,6 +245,24 @@ def prepare_data(current_dir: str) -> None:
             
             with open(current_dir + "/SCGPT_samples/wikibio_samples.json", "w") as f:
                 json.dump({"data" : scgpt}, f, indent=4)
+
+    with open(os.path.join(original_current_dir, "data", "dataset.json")) as f:
+        data: dict = json.load(f)
+
+    sample = [data[f"passage_{i}"]["gpt3_text"] for i in range(238)]
+    original = [data[f"passage_{i}"]["wiki_bio_text"] for i in range(238)]
+
+    sample_json = []
+    for s in sample:
+        sample_json.append({
+            "samples": [s]
+        })
+
+    with open(original_current_dir + "/wikibio_samples.json", "w") as f:
+        json.dump({"data": sample_json}, f, indent=4)
+
+    with open(original_current_dir + "/original_samples.json", "w") as f:
+        json.dump({"data": original}, f, indent=4)
 
 def move_embeddings(current_dir: str) -> None:
     """
@@ -174,7 +295,7 @@ def move_embeddings(current_dir: str) -> None:
 
 
 if __name__ == "__main__":
-    current_dir = os.path.dirname(os.path.abspath(__file__)) + "/results"
+    current_dir = os.path.dirname(os.path.abspath(__file__))
     os.makedirs(current_dir, exist_ok=True)
     
     prepare_data(current_dir)
@@ -187,3 +308,6 @@ if __name__ == "__main__":
 
         # The following line is really slow, it is recommended only to get results for i = 20
         start(current_dir + f"/{i}_samples", start=StartingPoint.EMBEDDINGS, not_ce = True)
+
+    start(current_dir, start=StartingPoint.OPERATIONS, not_ce = True, llm_as_a_judge = True)
+    start(current_dir, start=StartingPoint.OPERATIONS, not_ce = True, llm_as_a_judge_with_ref = True)

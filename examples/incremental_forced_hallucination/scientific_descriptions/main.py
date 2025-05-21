@@ -13,15 +13,16 @@ import json
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
+from langchain.prompts import PromptTemplate
+
 from CheckEmbed import language_models
 from CheckEmbed import embedding_models
 from CheckEmbed.parser import Parser
 from CheckEmbed.scheduler import Scheduler, StartingPoint
-from CheckEmbed.operations import CheckEmbedOperation
+from CheckEmbed.operations import CheckEmbedOperation, LLMAsAJudgeOperation
 
 from examples.incremental_forced_hallucination.operation_variants import CheckEmbedOperation_Variant, \
     BertScoreOperation_Variant, SelfCheckGPT_BERT_Operation_Variant, SelfCheckGPT_NLI_Operation_Variant
-
 
 topics_list = [
 "Supernova",
@@ -55,6 +56,23 @@ topics_list = [
 "Atomic theory",
 "Consciousness"
 ]
+
+prompt_template = PromptTemplate(
+    input_variables=["aaa"],
+    template="""
+### INSTRUCTION ###
+
+You are a linguistic expert. You will be given a passage of text containing some scientific descriptions about a topic. Your job is to rate how hallucinated the passage is based on the content of the description. You will need to output a score from 0 to 100, where 0 means the passage is completely hallucinated, and 100 means the passage is completely accurate.
+
+### OUTPUT ###
+
+The output should be a single number, which is the score from 0 to 100.
+You CANNOT output any other text. You CANNOT output a decimal number. You MUST output an integer number. You MUST NOT output a number that is less than 0 or greater than 100.
+
+### INPUT ###
+{aaa}
+""",
+)
 
 class CustomParser(Parser):
     """
@@ -197,6 +215,34 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
         model_name = "chatgpt4-o",
         cache = True,
         )
+    
+    gpt4_o_2 = language_models.ChatGPT(
+        config_path,
+        model_name = "chatgpt4-o",
+        cache = True,
+        temperature = 0.1,
+    )
+
+    gpt4_o_mini = language_models.ChatGPT(
+        config_path,
+        model_name = "chatgpt4-o-mini",
+        cache = False,
+        temperature = 0.1,
+    )
+
+    llama70 = language_models.LLMChatOllama(
+        config_path,
+        model_name = "llama70",
+        cache = False,
+        temperature = 0.1,
+    )
+
+    llama8 = language_models.LLMChatOllama(
+        config_path,
+        model_name = "llama8",
+        cache = False,
+        temperature = 0.1,
+    )
 
     embedd_large = embedding_models.EmbeddingGPT(
         config_path,
@@ -260,6 +306,13 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
             os.path.join(current_dir, "../ground_truth/embeddings"),
             os.path.join(current_dir, "embeddings"),
         )
+    
+    llm_judge_Operation = LLMAsAJudgeOperation(
+        os.path.join(current_dir, "Judge"),
+        current_dir,
+        prompt_template = prompt_template,
+    )
+
 
     # Initialize the scheduler
     scheduler = Scheduler(
@@ -272,6 +325,8 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
         bertScoreOperation = bertOperation,
         selfCheckGPTOperation = selfCheckGPTOperation,
         checkEmbedOperation = checkEmbedOperation,
+        llm_as_a_judge_Operation = llm_judge_Operation,
+        llm_as_a_judge_models = [gpt4_o_mini, gpt4_o_2, llama70, llama8],
     )
 
     # The order of lm_names and embedding_lm_names should be the same 
@@ -280,6 +335,7 @@ def start(current_dir: str, list: List[str], ground_truth_gen: bool = False, err
         startingPoint = start,
         bertScore = True,
         selfCheckGPT = True,
+        llm_as_a_judge= True,
         rebase_results = True,
         num_samples = 10,
         bertScore_model = "microsoft/deberta-xlarge-mnli",
