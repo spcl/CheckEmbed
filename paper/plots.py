@@ -20,6 +20,11 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import (
+    f1_score,
+    precision_score,
+    recall_score,
+)
 
 
 # written by Patrick Iff
@@ -685,14 +690,14 @@ def plot_wiki_bio(curr_dir: str, output_name: str):
         judge_ref_p[m], judge_ref_s[m] = compute_final_value(passage_scores, judge_scores_ref[m])
 
     # Add SCGPT row
-    scgpt_row_ce = f"| {scgpt_p_ce:.1f} | {scgpt_s_ce:.1f} |"
-    scgpt_row_nli = f"| {scgpt_p_nli:.1f} | {scgpt_s_nli:.1f} |"
-    bert_row = f"| {bert_p:.1f} | {bert_s:.1f} |"
+    scgpt_row_ce = f"| {scgpt_p_ce:.4f} | {scgpt_s_ce:.4f} |"
+    scgpt_row_nli = f"| {scgpt_p_nli:.4f} | {scgpt_s_nli:.4f} |"
+    bert_row = f"| {bert_p:.4f} | {bert_s:.4f} |"
     judge_row = {}
     judge_ref_row = {}
     for m in ["4o", "4o-mini", "llama70b", "llama8b"]:
-        judge_row[m] = f"| {judge_p[m]:.1f} | {judge_s[m]:.1f} |"
-        judge_ref_row[m] = f"| {judge_ref_p[m]:.1f} | {judge_ref_s[m]:.1f} |"
+        judge_row[m] = f"| {judge_p[m]:.4f} | {judge_s[m]:.4f} |"
+        judge_ref_row[m] = f"| {judge_ref_p[m]:.4f} | {judge_ref_s[m]:.4f} |"
     
 
     rows.append("| SCGPT_BertScore " + scgpt_row_ce)
@@ -708,7 +713,7 @@ def plot_wiki_bio(curr_dir: str, output_name: str):
         for embedding in embedding_methods:
             # Compute correlation for each embedding
             pearson_corr, spearman_corr = compute_final_value(passage_scores, sample_scores[embedding])
-            ce_row += f" {pearson_corr:.1f} | {spearman_corr:.1f} |"
+            ce_row += f" {pearson_corr:.4f} | {spearman_corr:.4f} |"
 
         ce_rows.append(ce_row)
 
@@ -719,6 +724,141 @@ def plot_wiki_bio(curr_dir: str, output_name: str):
     with open(output_name, "w") as f:
         f.write(markdown_table + "\n\n\n" + ce_markdown_table)
 
+def load_rag_data(curr_dir: str):
+    hallu_scores = {}
+    hallu_scores["total"] = {}
+    scgpt_scores = {}
+    scgpt_scores["total"] = {}
+    judge_scores = {}
+    judge_scores["total"] = {}
+    ce_scores = {}
+    ce_scores["total"] = {}
+    bert_scores = {}
+    bert_scores["total"] = []
+    correct_totals = []
+    for task in ["qa", "summary", "data2text"]:
+        hallu_scores[task] = {}
+        scgpt_scores[task] = {}
+        judge_scores[task] = {}
+        ce_scores[task] = {}
+        bert_scores[task] = []
+
+        with open(os.path.join(curr_dir, "data", f"{task}_response.json"), "r") as f:
+            correct_data = json.load(f)["data"]
+
+        correct_data_bin = [1.0 if len(d["labels"]) > 0 else 0.0 for d in correct_data]
+        correct_totals.extend(correct_data_bin)
+
+        # Hallu Detection
+        for file in os.listdir(os.path.join(curr_dir, "HalluDetect", f"{task}")):
+            name = file.split("mtp")[0]
+            with open(os.path.join(curr_dir, "HalluDetect", f"{task}", file), "r") as f:
+                data = json.load(f)
+
+            if name not in hallu_scores["total"]:
+                hallu_scores["total"][name] = []
+            hallu_scores[task][name] = [data["precision"], data["recall"], data["f1"]]
+
+        # SelfCheckGPT
+        for file in os.listdir(os.path.join(curr_dir, "SelfCheckGPT")):
+            if file.split("_")[0] != task:
+                continue
+            name = file.split("_")[2]
+            with open(os.path.join(curr_dir, "SelfCheckGPT", file), "r") as f:
+                data = json.load(f)["data"]
+
+            data = [value["passage_score"] for value in data]
+            data_bin = [1.0 if value > 0.5 else 0.0 for value in data]
+            if name not in scgpt_scores["total"]:
+                scgpt_scores["total"][name] = []
+            scgpt_scores["total"][name].extend(data_bin)
+            scgpt_scores[task][name] = [precision_score(correct_data_bin, data_bin), recall_score(correct_data_bin, data_bin), f1_score(correct_data_bin, data_bin)]
+
+        # Judge
+        for file in os.listdir(os.path.join(curr_dir, "Judge")):
+            if file.split("_")[1] != task:
+                continue
+            name = file.split("_")[0]
+            with open(os.path.join(curr_dir, "Judge", file), "r") as f:
+                data = json.load(f)["data"]
+
+            data = [float(value)/100.0 for value in data]
+            data_bin = [1.0 if value > 0.5 else 0.0 for value in data]
+            if name not in judge_scores["total"]:
+                judge_scores["total"][name] = []
+            judge_scores["total"][name].extend(data_bin)
+            judge_scores[task][name] = [precision_score(correct_data_bin, data_bin), recall_score(correct_data_bin, data_bin), f1_score(correct_data_bin, data_bin)]
+
+        for file in os.listdir(os.path.join(curr_dir, "CheckEmbed")):
+            if file.split("_")[0] != task:
+                continue
+            name = file.split("_")[1]
+            with open(os.path.join(curr_dir, "CheckEmbed", file), "r") as f:
+                data = json.load(f)["data"]
+
+            data = [value["frob_norm_cosine_sim"] for value in data]
+            data_bin = [1.0 if value > 0.5 else 0.0 for value in data]
+            if name not in ce_scores["total"]:
+                ce_scores["total"][name] = []
+            ce_scores["total"][name].extend(data_bin)
+            ce_scores[task][name] = [precision_score(correct_data_bin, data_bin), recall_score(correct_data_bin, data_bin), f1_score(correct_data_bin, data_bin)]
+
+        for file in os.listdir(os.path.join(curr_dir, "BertScore")):
+            if file.split("_")[0] != task:
+                continue
+            with open(os.path.join(curr_dir, "BertScore", file), "r") as f:
+                data = json.load(f)["data"]
+
+            data = [value["frobenius_norm"] for value in data]
+            data_bin = [1.0 if value > 0.5 else 0.0 for value in data]
+            bert_scores["total"].extend(data_bin)
+            bert_scores[task] = [precision_score(correct_data_bin, data_bin), recall_score(correct_data_bin, data_bin), f1_score(correct_data_bin, data_bin)]
+
+    # Compute the total scores
+    for model in hallu_scores["total"].keys():
+        hallu_scores["total"][model] = ["NA", "NA", "NA"]
+    for model in scgpt_scores["total"].keys():
+        scgpt_scores["total"][model] = [precision_score(correct_totals, scgpt_scores["total"][model]), recall_score(correct_totals, scgpt_scores["total"][model]), f1_score(correct_totals, scgpt_scores["total"][model])]
+    for model in judge_scores["total"].keys():
+        judge_scores["total"][model] = [precision_score(correct_totals, judge_scores["total"][model]), recall_score(correct_totals, judge_scores["total"][model]), f1_score(correct_totals, judge_scores["total"][model])]
+    for model in ce_scores["total"].keys():
+        ce_scores["total"][model] = [precision_score(correct_totals, ce_scores["total"][model]), recall_score(correct_totals, ce_scores["total"][model]), f1_score(correct_totals, ce_scores["total"][model])]
+    bert_scores["total"] = [precision_score(correct_totals, bert_scores["total"]), recall_score(correct_totals, bert_scores["total"]), f1_score(correct_totals, bert_scores["total"])]
+
+    return hallu_scores, scgpt_scores, judge_scores, ce_scores, bert_scores
+
+def plot_RAGTruth(curr_dir: str, output_name: str):
+    hallu_scores, scgpt_scores, judge_scores, ce_scores, bert_scores = load_rag_data(curr_dir)
+    # Create Markdown table
+
+    # Header row: Summary QA Data2txt for each one Precision Recall F1.
+    # Fist row only model and the 3 tasks
+    # secod row has for each task the 3 type of scores
+    header = "| Model |  | Summary |  |  | QA | | | Data2txt | | | Total | |\n"
+    header +=  "| :---: |" + " :---: |" * 12 + "\n"
+    header += "| | Precision | Recall | F1 | Precision | Recall | F1 | Precision | Recall | F1 | Precision | Recall | F1 |\n"
+    
+    # Fill all the results now
+    rows = []
+    rows.append("| HalluDetection |  |  |  |  |  |  |  |  |  |  |  |  |\n")
+    for model in hallu_scores["summary"].keys():
+        rows.append(f"| {model} | {hallu_scores['summary'][model][0]:.4f} | {hallu_scores['summary'][model][1]:.4f} | {hallu_scores['summary'][model][2]:.4f} | {hallu_scores['qa'][model][0]:.4f} | {hallu_scores['qa'][model][1]:.4f} | {hallu_scores['qa'][model][2]:.4f} | {hallu_scores['data2text'][model][0]:.4f} | {hallu_scores['data2text'][model][1]:.4f} | {hallu_scores['data2text'][model][2]:.4f} | {hallu_scores['total'][model][0]} | {hallu_scores['total'][model][1]} | {hallu_scores['total'][model][2]} |\n")
+    rows.append("| SelfCheckGPT |  |  |  |  |  |  |  |  |  |  |  |  |\n")
+    for model in scgpt_scores["summary"].keys():
+        rows.append(f"| {model} | {scgpt_scores['summary'][model][0]:.4f} | {scgpt_scores['summary'][model][1]:.4f} | {scgpt_scores['summary'][model][2]:.4f} | {scgpt_scores['qa'][model][0]:.4f} | {scgpt_scores['qa'][model][1]:.4f} | {scgpt_scores['qa'][model][2]:.4f} | {scgpt_scores['data2text'][model][0]:.4f} | {scgpt_scores['data2text'][model][1]:.4f} | {scgpt_scores['data2text'][model][2]:.4f} | {scgpt_scores['total'][model][0]:.4f} | {scgpt_scores['total'][model][1]:.4f} | {scgpt_scores['total'][model][2]:.4f} |\n")
+    rows.append("| LLM-as-a-Judge |  |  |  |  |  |  |  |  |  |  |  |  |\n")
+    for model in judge_scores["summary"].keys():
+        rows.append(f"| {model} | {judge_scores['summary'][model][0]:.4f} | {judge_scores['summary'][model][1]:.4f} | {judge_scores['summary'][model][2]:.4f} | {judge_scores['qa'][model][0]:.4f} | {judge_scores['qa'][model][1]:.4f} | {judge_scores['qa'][model][2]:.4f} | {judge_scores['data2text'][model][0]:.4f} | {judge_scores['data2text'][model][1]:.4f} | {judge_scores['data2text'][model][2]:.4f} | {judge_scores['total'][model][0]:.4f} | {judge_scores['total'][model][1]:.4f} | {judge_scores['total'][model][2]:.4f} |\n")
+    rows.append("| CheckEmbed |  |  |  |  |  |  |  |  |  |  |  |  |\n")
+    for model in ce_scores["summary"].keys():
+        rows.append(f"| {model} | {ce_scores['summary'][model][0]:.4f} | {ce_scores['summary'][model][1]:.4f} | {ce_scores['summary'][model][2]:.4f} | {ce_scores['qa'][model][0]:.4f} | {ce_scores['qa'][model][1]:.4f} | {ce_scores['qa'][model][2]:.4f} | {ce_scores['data2text'][model][0]:.4f} | {ce_scores['data2text'][model][1]:.4f} | {ce_scores['data2text'][model][2]:.4f} | {ce_scores['total'][model][0]:.4f} | {ce_scores['total'][model][1]:.4f} | {ce_scores['total'][model][2]:.4f} |\n")
+    rows.append("| BertScore |  |  |  |  |  |  |  |  |  |  |  |  |\n")
+    rows.append(f"| BertScore | {bert_scores['summary'][0]:.4f} | {bert_scores['summary'][1]:.4f} | {bert_scores['summary'][2]:.4f} | {bert_scores['qa'][0]:.4f} | {bert_scores['qa'][1]:.4f} | {bert_scores['qa'][2]:.4f} | {bert_scores['data2text'][0]:.4f} | {bert_scores['data2text'][1]:.4f} | {bert_scores['data2text'][2]:.4f} | {bert_scores['total'][0]:.4f} | {bert_scores['total'][1]:.4f} | {bert_scores['total'][2]:.4f} |\n")
+
+    # Join all parts into the full markdown table
+    markdown_table = header +  "".join(rows)
+    with open(output_name, "w") as f:
+        f.write(markdown_table)
 
 plot_description_combined()
 
@@ -767,7 +907,7 @@ plot_heatmap(
 
 plot_hallucination(
     "gpt4-o",
-    "gte",
+    "ste1.5",
     "llama8b",
     "score",
 )
@@ -809,4 +949,9 @@ plot_samples_accuracy(
 plot_wiki_bio(
     "results/wiki_bio",
     "wiki_bio.md"
+)
+
+plot_RAGTruth(
+    "results/RAGTruth",
+    "RAGTruth.md",
 )
