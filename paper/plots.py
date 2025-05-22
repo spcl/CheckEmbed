@@ -723,6 +723,7 @@ def plot_wiki_bio(curr_dir: str, output_name: str):
 
     with open(output_name, "w") as f:
         f.write(markdown_table + "\n\n\n" + ce_markdown_table)
+        
 
 def load_rag_data(curr_dir: str):
     hallu_scores = {}
@@ -746,18 +747,21 @@ def load_rag_data(curr_dir: str):
         with open(os.path.join(curr_dir, "data", f"{task}_response.json"), "r") as f:
             correct_data = json.load(f)["data"]
 
-        correct_data_bin = [1.0 if len(d["labels"]) > 0 else 0.0 for d in correct_data]
+        correct_data_bin = [0.0 if len(d["labels"]) > 0 else 1.0 for d in correct_data]
         correct_totals.extend(correct_data_bin)
 
         # Hallu Detection
         for file in os.listdir(os.path.join(curr_dir, "HalluDetect", f"{task}")):
             name = file.split("mtp")[0]
             with open(os.path.join(curr_dir, "HalluDetect", f"{task}", file), "r") as f:
-                data = json.load(f)
+                data = json.load(f)["output"]
+
+            data = [value[0] for value in data]
 
             if name not in hallu_scores["total"]:
                 hallu_scores["total"][name] = []
-            hallu_scores[task][name] = [data["precision"], data["recall"], data["f1"]]
+            hallu_scores["total"][name].extend(data)
+            hallu_scores[task][name] = [precision_score(correct_data_bin, data), recall_score(correct_data_bin, data), f1_score(correct_data_bin, data)]
 
         # SelfCheckGPT
         for file in os.listdir(os.path.join(curr_dir, "SelfCheckGPT")):
@@ -816,7 +820,7 @@ def load_rag_data(curr_dir: str):
 
     # Compute the total scores
     for model in hallu_scores["total"].keys():
-        hallu_scores["total"][model] = ["NA", "NA", "NA"]
+        hallu_scores["total"][model] = [precision_score(correct_totals, hallu_scores["total"][model]), recall_score(correct_totals, hallu_scores["total"][model]), f1_score(correct_totals, hallu_scores["total"][model])]
     for model in scgpt_scores["total"].keys():
         scgpt_scores["total"][model] = [precision_score(correct_totals, scgpt_scores["total"][model]), recall_score(correct_totals, scgpt_scores["total"][model]), f1_score(correct_totals, scgpt_scores["total"][model])]
     for model in judge_scores["total"].keys():
@@ -834,26 +838,30 @@ def plot_RAGTruth(curr_dir: str, output_name: str):
     # Header row: Summary QA Data2txt for each one Precision Recall F1.
     # Fist row only model and the 3 tasks
     # secod row has for each task the 3 type of scores
-    header = "| Model |  | Summary |  |  | QA | | | Data2txt | | | Total | |\n"
-    header +=  "| :---: |" + " :---: |" * 12 + "\n"
-    header += "| | Precision | Recall | F1 | Precision | Recall | F1 | Precision | Recall | F1 | Precision | Recall | F1 |\n"
+    header = "| Model |  | Summary |  | |  | QA | | | | Data2txt | | | | Total | |\n"
+    header +=  "| :---: |" + " :---: |" * 15 + "\n"
+    header += "| | Precision | Recall | F1 | | Precision | Recall | F1 | | Precision | Recall | F1 | | Precision | Recall | F1 |\n"
     
     # Fill all the results now
     rows = []
-    rows.append("| HalluDetection |  |  |  |  |  |  |  |  |  |  |  |  |\n")
+    rows.append("| HalluDetection |  |  |  |  |  |  |  | | | |  |  |  |  |  |\n")
     for model in hallu_scores["summary"].keys():
-        rows.append(f"| {model} | {hallu_scores['summary'][model][0]:.4f} | {hallu_scores['summary'][model][1]:.4f} | {hallu_scores['summary'][model][2]:.4f} | {hallu_scores['qa'][model][0]:.4f} | {hallu_scores['qa'][model][1]:.4f} | {hallu_scores['qa'][model][2]:.4f} | {hallu_scores['data2text'][model][0]:.4f} | {hallu_scores['data2text'][model][1]:.4f} | {hallu_scores['data2text'][model][2]:.4f} | {hallu_scores['total'][model][0]} | {hallu_scores['total'][model][1]} | {hallu_scores['total'][model][2]} |\n")
-    rows.append("| SelfCheckGPT |  |  |  |  |  |  |  |  |  |  |  |  |\n")
+        rows.append(f"| {model} | {hallu_scores['summary'][model][0]:.4f} | {hallu_scores['summary'][model][1]:.4f} | {hallu_scores['summary'][model][2]:.4f} || {hallu_scores['qa'][model][0]:.4f} | {hallu_scores['qa'][model][1]:.4f} | {hallu_scores['qa'][model][2]:.4f} || {hallu_scores['data2text'][model][0]:.4f} | {hallu_scores['data2text'][model][1]:.4f} | {hallu_scores['data2text'][model][2]:.4f} || {hallu_scores['total'][model][0]:.4f} | {hallu_scores['total'][model][1]:.4f} | {hallu_scores['total'][model][2]:.4f} |\n")
+    rows.append("|  |  |  |  |  |  |  |  |  |  | | | | |  |  |\n")
+    rows.append("| SelfCheckGPT |  |  |  |  |  |  |  |  | | ||  |  |  |  |\n")
     for model in scgpt_scores["summary"].keys():
-        rows.append(f"| {model} | {scgpt_scores['summary'][model][0]:.4f} | {scgpt_scores['summary'][model][1]:.4f} | {scgpt_scores['summary'][model][2]:.4f} | {scgpt_scores['qa'][model][0]:.4f} | {scgpt_scores['qa'][model][1]:.4f} | {scgpt_scores['qa'][model][2]:.4f} | {scgpt_scores['data2text'][model][0]:.4f} | {scgpt_scores['data2text'][model][1]:.4f} | {scgpt_scores['data2text'][model][2]:.4f} | {scgpt_scores['total'][model][0]:.4f} | {scgpt_scores['total'][model][1]:.4f} | {scgpt_scores['total'][model][2]:.4f} |\n")
-    rows.append("| LLM-as-a-Judge |  |  |  |  |  |  |  |  |  |  |  |  |\n")
+        rows.append(f"| {model} | {scgpt_scores['summary'][model][0]:.4f} | {scgpt_scores['summary'][model][1]:.4f} | {scgpt_scores['summary'][model][2]:.4f} || {scgpt_scores['qa'][model][0]:.4f} | {scgpt_scores['qa'][model][1]:.4f} | {scgpt_scores['qa'][model][2]:.4f} || {scgpt_scores['data2text'][model][0]:.4f} | {scgpt_scores['data2text'][model][1]:.4f} | {scgpt_scores['data2text'][model][2]:.4f} || {scgpt_scores['total'][model][0]:.4f} | {scgpt_scores['total'][model][1]:.4f} | {scgpt_scores['total'][model][2]:.4f} |\n")
+    rows.append("|  |  |  |  |  |  |  |  |  |  ||||  |  |  |\n")
+    rows.append("| LLM-as-a-Judge |  |  |  |  |  | ||| |  |  |  |  |  |  |\n")
     for model in judge_scores["summary"].keys():
-        rows.append(f"| {model} | {judge_scores['summary'][model][0]:.4f} | {judge_scores['summary'][model][1]:.4f} | {judge_scores['summary'][model][2]:.4f} | {judge_scores['qa'][model][0]:.4f} | {judge_scores['qa'][model][1]:.4f} | {judge_scores['qa'][model][2]:.4f} | {judge_scores['data2text'][model][0]:.4f} | {judge_scores['data2text'][model][1]:.4f} | {judge_scores['data2text'][model][2]:.4f} | {judge_scores['total'][model][0]:.4f} | {judge_scores['total'][model][1]:.4f} | {judge_scores['total'][model][2]:.4f} |\n")
-    rows.append("| CheckEmbed |  |  |  |  |  |  |  |  |  |  |  |  |\n")
+        rows.append(f"| {model} | {judge_scores['summary'][model][0]:.4f} | {judge_scores['summary'][model][1]:.4f} | {judge_scores['summary'][model][2]:.4f} || {judge_scores['qa'][model][0]:.4f} | {judge_scores['qa'][model][1]:.4f} | {judge_scores['qa'][model][2]:.4f}| | {judge_scores['data2text'][model][0]:.4f} | {judge_scores['data2text'][model][1]:.4f} | {judge_scores['data2text'][model][2]:.4f} || {judge_scores['total'][model][0]:.4f} | {judge_scores['total'][model][1]:.4f} | {judge_scores['total'][model][2]:.4f} |\n")
+    rows.append("|  |  |  |  |  |  |  |  |  |  | ||| |  |  |\n")
+    rows.append("| CheckEmbed |  |  |  |  |  |  | ||| |  |  |  |  |  |\n")
     for model in ce_scores["summary"].keys():
-        rows.append(f"| {model} | {ce_scores['summary'][model][0]:.4f} | {ce_scores['summary'][model][1]:.4f} | {ce_scores['summary'][model][2]:.4f} | {ce_scores['qa'][model][0]:.4f} | {ce_scores['qa'][model][1]:.4f} | {ce_scores['qa'][model][2]:.4f} | {ce_scores['data2text'][model][0]:.4f} | {ce_scores['data2text'][model][1]:.4f} | {ce_scores['data2text'][model][2]:.4f} | {ce_scores['total'][model][0]:.4f} | {ce_scores['total'][model][1]:.4f} | {ce_scores['total'][model][2]:.4f} |\n")
-    rows.append("| BertScore |  |  |  |  |  |  |  |  |  |  |  |  |\n")
-    rows.append(f"| BertScore | {bert_scores['summary'][0]:.4f} | {bert_scores['summary'][1]:.4f} | {bert_scores['summary'][2]:.4f} | {bert_scores['qa'][0]:.4f} | {bert_scores['qa'][1]:.4f} | {bert_scores['qa'][2]:.4f} | {bert_scores['data2text'][0]:.4f} | {bert_scores['data2text'][1]:.4f} | {bert_scores['data2text'][2]:.4f} | {bert_scores['total'][0]:.4f} | {bert_scores['total'][1]:.4f} | {bert_scores['total'][2]:.4f} |\n")
+        rows.append(f"| {model} | {ce_scores['summary'][model][0]:.4f} | {ce_scores['summary'][model][1]:.4f} | {ce_scores['summary'][model][2]:.4f} | |{ce_scores['qa'][model][0]:.4f} | {ce_scores['qa'][model][1]:.4f} | {ce_scores['qa'][model][2]:.4f} || {ce_scores['data2text'][model][0]:.4f} | {ce_scores['data2text'][model][1]:.4f} | {ce_scores['data2text'][model][2]:.4f} || {ce_scores['total'][model][0]:.4f} | {ce_scores['total'][model][1]:.4f} | {ce_scores['total'][model][2]:.4f} |\n")
+    rows.append("|  |  |  |  |  |  |  |  |  |  | ||| |  |  |\n")
+    rows.append("| BertScore |  |  |  |  |  |  | ||| |  |  |  |  |  |\n")
+    rows.append(f"| BertScore | {bert_scores['summary'][0]:.4f} | {bert_scores['summary'][1]:.4f} | {bert_scores['summary'][2]:.4f} || {bert_scores['qa'][0]:.4f} | {bert_scores['qa'][1]:.4f} | {bert_scores['qa'][2]:.4f} || {bert_scores['data2text'][0]:.4f} | {bert_scores['data2text'][1]:.4f} | {bert_scores['data2text'][2]:.4f} || {bert_scores['total'][0]:.4f} | {bert_scores['total'][1]:.4f} | {bert_scores['total'][2]:.4f} |\n")
 
     # Join all parts into the full markdown table
     markdown_table = header +  "".join(rows)
