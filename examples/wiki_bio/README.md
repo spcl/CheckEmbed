@@ -21,4 +21,4 @@ The sample step is skipped, since the samples are already provided in the datase
 
 The embedding model from OpenAI has a cost of $0.13 / 1M tokens, which results in an approximate cost of $0.65 for the evaluation of this example.
 
-LLM-as-a-judge models will result in a cost of $1.
+Using LLM-as-a-judge will cost around $1.

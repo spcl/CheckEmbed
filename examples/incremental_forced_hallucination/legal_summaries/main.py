@@ -28,7 +28,7 @@ from examples.incremental_forced_hallucination.operation_variants import (
 )
 
 prompt_template = PromptTemplate(
-    input_variables=["aaaa", "bbbbb"],
+    input_variables=["aaa", "bbb"],
     template="""
 ### INSTRUCTION ###
 
@@ -40,10 +40,10 @@ The output should be a single number, which is the score from 0 to 100.
 You CANNOT output any other text. You CANNOT output a decimal number. You MUST output an integer number. You MUST NOT output a number that is less than 0 or greater than 100.
 
 ### INPUT ###
-{aaaa}
+{aaa}
 
 ### ORIGINAL PASSAGE ###
-{bbbbb}
+{bbb}
 """,
 )
 
@@ -305,7 +305,7 @@ def start(current_dir: str, ground_truth_gen: bool = False, error_number: int = 
         bertScoreOperation = bertOperation,
         selfCheckGPTOperation = selfCheckGPTOperation,
         checkEmbedOperation = checkEmbedOperation,
-        llm_as_a_judge_Operation=llm_judge_Operation,
+        llm_as_a_judge_Operation = llm_judge_Operation,
         llm_as_a_judge_models = [gpt4_o_mini, gpt4_o_2, llama70, llama8],
     )
 
@@ -332,7 +332,6 @@ if __name__ == "__main__":
     with open(os.path.dirname(os.path.abspath(__file__)) + "/dataset/judge_original.json", "w") as f:
         json.dump({"data": [d["chunk_txt"] for d in data]}, f, indent=4)
 
-    exit(0)
     current_dir = os.path.dirname(os.path.abspath(__file__)) + "/ground_truth"
     os.makedirs(current_dir, exist_ok=True)
     os.makedirs(current_dir + "/CheckEmbed_Self", exist_ok=True)
