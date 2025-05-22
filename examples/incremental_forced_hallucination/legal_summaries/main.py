@@ -6,26 +6,29 @@
 #
 # main author: Lorenzo Paleari
 
+import json
 import logging
 import os
-from typing import Any, List
-import json
 import sys
+from typing import Any, List
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../"))
 
 from langchain.prompts import PromptTemplate
 
+from CheckEmbed import embedding_models, language_models
 from CheckEmbed.operations import CheckEmbedOperation, LLMAsAJudgeOperation
-from CheckEmbed import language_models
-from CheckEmbed import embedding_models
 from CheckEmbed.parser import Parser
 from CheckEmbed.scheduler import Scheduler, StartingPoint
-
-from examples.incremental_forced_hallucination.operation_variants import CheckEmbedOperation_Variant, \
-    BertScoreOperation_Variant, SelfCheckGPT_BERT_Operation_Variant, SelfCheckGPT_NLI_Operation_Variant
+from examples.incremental_forced_hallucination.operation_variants import (
+    BertScoreOperation_Variant,
+    CheckEmbedOperation_Variant,
+    SelfCheckGPT_BERT_Operation_Variant,
+    SelfCheckGPT_NLI_Operation_Variant,
+)
 
 prompt_template = PromptTemplate(
-    input_variables=["summary", "original"],
+    input_variables=["aaaa", "bbbbb"],
     template="""
 ### INSTRUCTION ###
 
@@ -37,10 +40,10 @@ The output should be a single number, which is the score from 0 to 100.
 You CANNOT output any other text. You CANNOT output a decimal number. You MUST output an integer number. You MUST NOT output a number that is less than 0 or greater than 100.
 
 ### INPUT ###
-{summary}
+{aaaa}
 
 ### ORIGINAL PASSAGE ###
-{original}
+{bbbbb}
 """,
 )
 

@@ -6,18 +6,21 @@
 #
 # main author: Lorenzo Paleari
 
+import json
 import logging
 import os
 from typing import Any, List
-import json
 
 from langchain.prompts import PromptTemplate
 
-from CheckEmbed import language_models
-from CheckEmbed import embedding_models
+from CheckEmbed import embedding_models, language_models
+from CheckEmbed.operations import (
+    LLMAsAJudgeOperation,
+    SelfCheckGPT_BERT_Operation,
+    SelfCheckGPT_NLI_Operation,
+)
 from CheckEmbed.parser import Parser
 from CheckEmbed.scheduler import Scheduler, StartingPoint
-from CheckEmbed.operations import SelfCheckGPT_BERT_Operation, SelfCheckGPT_NLI_Operation, LLMAsAJudgeOperation
 
 precise_topics = [
 "Old, rusted bicycle leaning against a weathered fence",
@@ -126,7 +129,7 @@ general_topics = [
 ]
 
 prompt_template = PromptTemplate(
-    input_variables=["description1", "description2"],
+    input_variables=["aaa", "bbb"],
     template="""
 ### INSTRUCTION ###
 
@@ -138,8 +141,8 @@ The output should be a single number, which is the score from 0 to 100.
 You CANNOT output any other text. You CANNOT output a decimal number. You MUST output an integer number. You MUST NOT output a number that is less than 0 or greater than 100.
 
 ### INPUT ###
-{description1}
-{description2}
+{aaa}
+{bbb}
 """,
 )
 

@@ -6,23 +6,26 @@
 #
 # main author: Lorenzo Paleari
 
+import json
 import logging
 import os
-from typing import Any, List
-import json
 import sys
+from typing import Any, List
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
 from langchain.prompts import PromptTemplate
 
-from CheckEmbed import language_models
-from CheckEmbed import embedding_models
+from CheckEmbed import embedding_models, language_models
+from CheckEmbed.operations import CheckEmbedOperation, LLMAsAJudgeOperation
 from CheckEmbed.parser import Parser
 from CheckEmbed.scheduler import Scheduler, StartingPoint
-from CheckEmbed.operations import CheckEmbedOperation, LLMAsAJudgeOperation
-
-from examples.incremental_forced_hallucination.operation_variants import CheckEmbedOperation_Variant, \
-    BertScoreOperation_Variant, SelfCheckGPT_BERT_Operation_Variant, SelfCheckGPT_NLI_Operation_Variant
+from examples.incremental_forced_hallucination.operation_variants import (
+    BertScoreOperation_Variant,
+    CheckEmbedOperation_Variant,
+    SelfCheckGPT_BERT_Operation_Variant,
+    SelfCheckGPT_NLI_Operation_Variant,
+)
 
 topics_list = [
 "Supernova",
