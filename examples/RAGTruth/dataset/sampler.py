@@ -1,11 +1,17 @@
-import openai
-import time
-import json
+# Copyright (c) 2024 ETH Zurich.
+#                    All rights reserved.
+#
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# main author: Lorenzo Paleari
 
-from openai import OpenAI
+import json
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from transformers import AutoModelForCausalLM, AutoTokenizer
+import openai
+from openai import OpenAI
 from vllm import LLM, SamplingParams
 
 client = OpenAI(
@@ -207,6 +213,6 @@ def main():
 
 if __name__ == '__main__':
     main()
-    ### CORRENTLY NOT WORKING CORRECTLY ###
+    ### CURRENTLY NOT WORKING CORRECTLY ###
     ### WHEN USING VLLM WITH MULTI TENSOR PARALLELISM, MODEL WILL NOT BE ABLE TO SWITCH ###
     ### SO it can be used, but if you go from mistral to llama, you will have to restart the script ###

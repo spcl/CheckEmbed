@@ -36,4 +36,8 @@ Following the instruction in RAGTruth and their github we generated 10 samples f
 
 All run locally, the samples script has been given, The cost is 0
 
-LLM-as-a-Judge cost to establish
+We also provide an adjusted version of HalluDetect as additional baseline.
+
+Halludetect needed 2 A100 GPUs to run. It is recommended to use a similar amout of VRAM
+
+LLM-as-a-Judge $20
