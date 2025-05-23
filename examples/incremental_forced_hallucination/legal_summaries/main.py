@@ -22,7 +22,7 @@ from CheckEmbed import embedding_models
 from CheckEmbed.parser import Parser
 from CheckEmbed.scheduler import Scheduler, StartingPoint
 
-import CheckEmbedOperation_Variant, \
+from examples.incremental_forced_hallucination.operation_variants import CheckEmbedOperation_Variant, \
     BertScoreOperation_Variant, SelfCheckGPT_BERT_Operation_Variant, SelfCheckGPT_NLI_Operation_Variant
 
 prompt_template = PromptTemplate(

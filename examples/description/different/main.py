@@ -128,11 +128,7 @@ You are a linguistic expert. You will be given two separate descriptions. You jo
 
 ### OUTPUT ###
 
-The output should be a single number, which is the score from 0 to 100.
-You CANNOT output any other text.
-You CANNOT output a decimal number.
-You MUST output an integer number.
-You MUST NOT output a number that is less than 0 or greater than 100.
+The output should be a single number, which is the score from 0 to 100. You CANNOT output any other text. You CANNOT output a decimal number. You MUST output an integer number. You MUST NOT output a number that is less than 0 or greater than 100.
 
 ### INPUT ###
 {aaa}
