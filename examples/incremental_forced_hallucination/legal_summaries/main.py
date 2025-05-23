@@ -16,16 +16,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../../"))
 
 from langchain.prompts import PromptTemplate
 
-from CheckEmbed import embedding_models, language_models
 from CheckEmbed.operations import CheckEmbedOperation, LLMAsAJudgeOperation
+from CheckEmbed import language_models
+from CheckEmbed import embedding_models
 from CheckEmbed.parser import Parser
 from CheckEmbed.scheduler import Scheduler, StartingPoint
-from examples.incremental_forced_hallucination.operation_variants import (
-    BertScoreOperation_Variant,
-    CheckEmbedOperation_Variant,
-    SelfCheckGPT_BERT_Operation_Variant,
-    SelfCheckGPT_NLI_Operation_Variant,
-)
+
+import CheckEmbedOperation_Variant, \
+    BertScoreOperation_Variant, SelfCheckGPT_BERT_Operation_Variant, SelfCheckGPT_NLI_Operation_Variant
 
 prompt_template = PromptTemplate(
     input_variables=["aaa", "bbb"],
@@ -247,13 +245,13 @@ def start(current_dir: str, ground_truth_gen: bool = False, error_number: int = 
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_1.5B_v5",
+        model_name = "NovaSearch/stella_en_1.5B_v5",
         variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_400M_v5",
+        model_name = "NovaSearch/stella_en_400M_v5",
         cache = False,
     )
 

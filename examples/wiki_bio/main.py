@@ -13,12 +13,8 @@ import os
 from langchain.prompts import PromptTemplate
 
 from CheckEmbed import embedding_models, language_models
-from CheckEmbed.operations import (
-    LLMAsAJudgeOperation,
-    SelfCheckGPT_BERT_Operation,
-    SelfCheckGPT_NLI_Operation,
-)
 from CheckEmbed.scheduler import Scheduler, StartingPoint
+from CheckEmbed.operations import SelfCheckGPT_BERT_Operation, SelfCheckGPT_NLI_Operation, LLMAsAJudgeOperation
 
 prompt_template = PromptTemplate(
     input_variables=["aaa"],
@@ -170,13 +166,13 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, not_ce: bool = Fa
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_1.5B_v5",
+        model_name = "NovaSearch/stella_en_1.5B_v5",
         variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_400M_v5",
+        model_name = "NovaSearch/stella_en_400M_v5",
         cache = False,
     )
 

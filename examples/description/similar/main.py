@@ -13,14 +13,11 @@ from typing import Any, List
 
 from langchain.prompts import PromptTemplate
 
-from CheckEmbed import embedding_models, language_models
-from CheckEmbed.operations import (
-    LLMAsAJudgeOperation,
-    SelfCheckGPT_BERT_Operation,
-    SelfCheckGPT_NLI_Operation,
-)
+from CheckEmbed import embedding_models
+from CheckEmbed import language_models
 from CheckEmbed.parser import Parser
 from CheckEmbed.scheduler import Scheduler, StartingPoint
+from CheckEmbed.operations import SelfCheckGPT_BERT_Operation, SelfCheckGPT_NLI_Operation, LLMAsAJudgeOperation
 
 precise_topics = [
 "Old, rusted bicycle leaning against a weathered fence",
@@ -321,13 +318,13 @@ def start(current_dir: str, list: List[str]):
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_1.5B_v5",
+        model_name = "NovaSearch/stella_en_1.5B_v5",
         variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_400M_v5",
+        model_name = "NovaSearch/stella_en_400M_v5",
         cache = False,
     )
 

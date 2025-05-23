@@ -6,16 +6,19 @@
 #
 # main author: Lorenzo Paleari
 
+import json
 import logging
 import os
 from typing import Any, List
-import json
 
-from CheckEmbed import language_models
-from CheckEmbed import embedding_models
+from CheckEmbed import embedding_models, language_models
+from CheckEmbed.operations import (
+    SelfCheckGPT_BERT_Operation,
+    SelfCheckGPT_NLI_Operation,
+)
 from CheckEmbed.parser import Parser
-from CheckEmbed.operations import SelfCheckGPT_BERT_Operation, SelfCheckGPT_NLI_Operation
 from CheckEmbed.scheduler import Scheduler, StartingPoint
+
 
 class CustomParser(Parser):
     """
@@ -172,13 +175,13 @@ def start(current_dir: str, num_chunks: int = 1, start: int = StartingPoint.PROM
     )
 
     stella_en_15B_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_1.5B_v5",
+        model_name = "NovaSearch/stella_en_1.5B_v5",
         variant = "1.5B-v5",
         cache = False,
     )
 
     stella_en_400M_v5 = embedding_models.Stella(
-        model_name = "dunzhang/stella_en_400M_v5",
+        model_name = "NovaSearch/stella_en_400M_v5",
         cache = False,
     )
 

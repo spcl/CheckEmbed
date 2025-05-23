@@ -12,12 +12,12 @@
 # modifications: Lorenzo Paleari
 
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Union
+
 import backoff
-import os
-from typing import List, Dict, Union
 from openai import OpenAI, OpenAIError
 from openai.types.chat.chat_completion import ChatCompletion
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 from CheckEmbed.language_models import AbstractLanguageModel
