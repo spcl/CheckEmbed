@@ -6,8 +6,8 @@
 #
 # main author: Lorenzo Paleari
 
-import logging
 import json
+import logging
 import os
 
 from langchain.prompts import PromptTemplate

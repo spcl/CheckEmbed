@@ -6,11 +6,12 @@
 #
 # main author: Lorenzo Paleari
 
+import json
 import logging
 import os
-from typing import Any, List
-import json
 import sys
+from typing import Any, List
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../"))
 
 from langchain.prompts import PromptTemplate
