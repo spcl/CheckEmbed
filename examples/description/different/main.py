@@ -357,8 +357,8 @@ def start(current_dir: str, list: List[str]) -> None:
         parser = customParser,
         lm = [gpt4_o, gpt4, gpt3],
         embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct, stella_en_15B_v5, stella_en_400M_v5],
-        selfCheckGPTOperation=[selfCheckGPT_NLI_Operation, selfCheckGPT_BERT_Operation],
-        llm_as_a_judge_Operation=llm_judge_Operation,
+        selfCheckGPTOperation = [selfCheckGPT_NLI_Operation, selfCheckGPT_BERT_Operation],
+        llm_as_a_judge_Operation = llm_judge_Operation,
         llm_as_a_judge_models = [gpt4_o_mini, gpt4_o_2, llama70, llama8],
     )
 
