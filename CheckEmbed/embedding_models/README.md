@@ -10,6 +10,7 @@ Currently, the framework supports the following embedding models:
 - Alibaba-NLP/gte-Qwen1.5-7B-instruct (local - GPU with 32GB VRAM recommended, model size is roughly 26GB)
 - NovaSearch/stella_en_1.5B_v5 (local - GPU with 12GB VRAM recommended, model size is roughly 6GB)
 - NovaSearch/stella_en_400M_v5 (local - GPU with 4GB VRAM recommended, model size is roughly 2GB)
+- openai/clip-vit-large-patch14 (local - GPU with 4GB VRAM recommended, model size is roughly 2GB)
 
 The following sections describe how to instantiate individual models and how to add new models to the framework.
 
@@ -33,7 +34,8 @@ The following sections describe how to instantiate individual models and how to 
 | api_key             | Personal API key that will be used to access OpenAI API.                                                                                                                                                                                                                                                                                                            |
 
 - Instantiate the embedding model based on the selected configuration key (predefined / custom).
-    - `max_concurrent_request` is by default 10. Adjust the value based on your tier [rate limits](https://platform.openai.com/docs/guides/rate-limits).
+  - `max_concurrent_request` is by default 10. Adjust the value based on your tier [rate limits](https://platform.openai.com/docs/guides/rate-limits).
+
 ```python
 embedding_lm = language_models.EmbeddingGPT(
                     config_path,
@@ -44,10 +46,12 @@ embedding_lm = language_models.EmbeddingGPT(
 ```
 
 ### Local Models
-The framework currently supports the following local models: `Salesforce/SFR-Embedding-Mistral`, `intfloat/e5-mistral-7b-instruct`, `Alibaba-NLP/gte-Qwen1.5-7B-instruct`, `NovaSearch/stella_en_1.5B_v5` and `NovaSearch/stella_en_400M_v5`.
+
+The framework currently supports the following local models: `Salesforce/SFR-Embedding-Mistral`, `intfloat/e5-mistral-7b-instruct`, `Alibaba-NLP/gte-Qwen1.5-7B-instruct`, `NovaSearch/stella_en_1.5B_v5`, `NovaSearch/stella_en_400M_v5` and `openai/clip-vit-large-patch14`.
 
 - Instantiate the embedding model based on the owned device.
 - Device can be specified in the `Scheduler`, more [here](/CheckEmbed/scheduler/scheduler.py)
+
 ```python
 sfrEmbeddingMistral = language_models.SFREmbeddingMistral(
                           model_name = "Salesforce/SFR-Embedding-Mistral",
@@ -79,6 +83,11 @@ stella_en_400M_v5 = embedding_models.Stella(
         cache = False,
         batch_size = 64,
     )
+
+clip_vit_large = embedding_models.ClipVitLarge(
+        model_name = "openai/clip-vit-large-patch14",
+        cache = False,
+    )
 ```
 
 ## Adding Embedding Models
@@ -105,9 +114,22 @@ class CustomLanguageModel(AbstractEmbeddingModel):
         # Instantiate model if needed
 ```
 
-- Implement the `generate_embedding` abstract method that is used to get a list of embeddings from the model (remote API call or local model inference).
+- Implement the `load_model`, `unload_model` and `generate_embedding` abstract method that is used to get a list of embeddings from the model (remote API call or local model inference).
 
 ```python
+def load_model(self, device: str = None) -> None:
+    """
+    Load the model and tokenizer based on the given model name.
+
+    :param device: The device to load the model on.
+    :type device: str
+    """
+
+def unload_model(self) -> None:
+    """
+    Unload the model and tokenizer.
+    """
+    
 def generate_embedding(
         self,
         input: Union[List[str], str]

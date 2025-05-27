@@ -104,9 +104,22 @@ def query(
     # Return LLM response structure (not only raw strings)    
 ```
 
-- Implement `get_response_texts` abstract method that is used to get a list of raw texts from the LLM response structure produced by `query`.
+- Implement the `load_model`, `unload_model` and  `get_response_texts` abstract method that is used to get a list of raw texts from the LLM response structure produced by `query`.
 
 ```python
+def load_model(self, device: str = None) -> None:
+    """
+    Load the model and tokenizer based on the given model name.
+
+    :param device: The device to load the model on.
+    :type device: str
+    """
+
+def unload_model(self) -> None:
+    """
+    Unload the model and tokenizer.
+    """
+
 def get_response_texts(
         self, 
         query_response: Union[List[Any], Any]

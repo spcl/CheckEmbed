@@ -1,4 +1,4 @@
-# Copyright (c) 2024 ETH Zurich.
+# Copyright (c) 2025 ETH Zurich.
 #                    All rights reserved.
 #
 # Use of this source code is governed by a BSD-style license that can be
@@ -6,28 +6,30 @@
 #
 # main author: Lorenzo Paleari
 
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Union
 import json
 import logging
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Union
+
+from PIL.Image import Image
 
 
-class AbstractEmbeddingModel(ABC):
+class AbstractVisionModel(ABC):
     """
-    Abstract base class that defines the interface for all embedding models.
+    Abstract base class that defines the interface for all vision models.
     """
 
     def __init__(
         self, config_path: str = None, model_name: str = "", name: str = "INVALID_NAME", cache: bool = False
     ) -> None:
         """
-        Initialize the AbstractEmbeddingModel instance with configuration, model details, and caching options.
+        Initialize the AbstractVisionModel instance with configuration, model details, and caching options.
 
         :param config_path: Path to the config file. If provided, the config is loaded from the file. Defaults to "".
         :type config_path: str
-        :param model_name: Name of the language model. Defaults to "".
+        :param model_name: Name of the vision model. Defaults to "".
         :type model_name: str
-        :param name: Name of the embedding model. Defaults to "INVALID_NAME".
+        :param name: Name of the vision model. Defaults to "INVALID_NAME".
         :type name: str
         :param cache: Flag to determine whether to cache responses. Defaults to False.
         :type cache: bool
@@ -71,7 +73,7 @@ class AbstractEmbeddingModel(ABC):
     @abstractmethod
     def load_model(self, device: str = None) -> None:
         """
-        Abstract method to load the embedding model.
+        Abstract method to load the vision model.
 
         :param device: The device to load the model on.
         :type device: str
@@ -81,18 +83,18 @@ class AbstractEmbeddingModel(ABC):
     @abstractmethod
     def unload_model(self) -> None:
         """
-        Abstract method to unload the embedding model.
+        Abstract method to unload the vision model.
         """
         pass
 
     @abstractmethod
-    def generate_embedding(self, input: Union[List[Any], Any]) -> List[List[float]]:
+    def generate_image(self, input: Union[List[str], str]) -> List[Image]:
         """
-        Abstract method to generate embedding for the given input text.
+        Abstract method to generate images for the given input text.
 
         :param input: The input text to embed.
-        :type input: Union[List[Any], Any]
-        :return: The embeddings of the text.
-        :rtype: List[List[float]]
+        :type input: Union[List[str], str]
+        :return: The generated images.
+        :rtype: List[Image]
         """
         pass
