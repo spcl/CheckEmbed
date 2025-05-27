@@ -8,6 +8,7 @@
 # Patrick Iff
 # Lorenzo Paleari
 # Robert Gerstenberger
+# Eric Schreiber
 
 
 import json
@@ -19,6 +20,8 @@ from typing import Dict, List, Optional
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import (
     f1_score,
@@ -341,7 +344,7 @@ def plot_hallucination(model, emb_model, judge, metric):
     # Configure plot
     ax.set_xlim(-1,xpos+1)
     ax.grid(axis = "y")
-    ax.set_xlabel(" " * 17 + "Error")
+    ax.set_xlabel(" " * 17 + "Number of introduced Errors")
     if metric == "score":
         ax.set_ylim(0,1)
         ax.set_ylabel("Score (higher: assessed as more similar)")
@@ -724,7 +727,7 @@ def plot_wiki_bio(curr_dir: str, output_name: str):
     with open(output_name, "w") as f:
         f.write(markdown_table + "\n\n\n" + ce_markdown_table)
         
-
+# written by Lorenzo Paleari
 def load_rag_data(curr_dir: str):
     hallu_scores = {}
     hallu_scores["total"] = {}
@@ -831,6 +834,7 @@ def load_rag_data(curr_dir: str):
 
     return hallu_scores, scgpt_scores, judge_scores, ce_scores, bert_scores
 
+# written by Lorenzo Paleari
 def plot_RAGTruth(curr_dir: str, output_name: str):
     hallu_scores, scgpt_scores, judge_scores, ce_scores, bert_scores = load_rag_data(curr_dir)
     # Create Markdown table
@@ -867,6 +871,102 @@ def plot_RAGTruth(curr_dir: str, output_name: str):
     markdown_table = header +  "".join(rows)
     with open(output_name, "w") as f:
         f.write(markdown_table)
+
+# written by Eric Schreiber
+def load_all_single_values(file_path):
+    """
+    Load all single values from a JSON file.
+    
+    Args:
+        file_path (str): Path to the JSON file containing the single values.
+    
+    Returns:
+            "frob_norm_cosine_sim": float,
+            "std_dev_cosine_sim": float,
+            "frob_norm_pearson_corr": float,
+            "std_dev_pearson_corr": float,
+    """
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"The file {file_path} does not exist.")
+    
+    with open(file_path, 'r') as f:
+        file = json.load(f)
+        frob_norm_cosine_sim = file["data"][0]["frob_norm_cosine_sim"]
+        std_dev_cosine_sim = file["data"][0]["std_dev_cosine_sim"]
+        frob_norm_pearson_corr = file["data"][0]["frob_norm_pearson_corr"]
+        std_dev_pearson_corr = file["data"][0]["std_dev_pearson_corr"]
+    
+    return frob_norm_cosine_sim, std_dev_cosine_sim, frob_norm_pearson_corr, std_dev_pearson_corr
+
+def plot_vision_results(correct_images, path):
+    frobnorms = []
+    std_dev_cosine_sims = []
+    frob_norm_pearson_corrs = []
+    std_dev_pearson_corrs = []
+    for i in range(8):
+        for j in range(5):
+            file = f"countingitems{i}-{j}.json_results.json"
+            if not os.path.exists(os.path.join(path, file)):
+                continue
+            
+            frobnorm, std_dev_cosine_sim, frob_norm_pearson_corr, std_dev_pearson_corr = load_all_single_values(os.path.join(path, file))
+            if j == 0:
+                frobnorms.append([frobnorm])
+                std_dev_cosine_sims.append([std_dev_cosine_sim])
+                frob_norm_pearson_corrs.append([frob_norm_pearson_corr])
+                std_dev_pearson_corrs.append([std_dev_pearson_corr])
+            else:
+                frobnorms[-1].append(frobnorm)
+                std_dev_cosine_sims[-1].append(std_dev_cosine_sim)
+                frob_norm_pearson_corrs[-1].append(frob_norm_pearson_corr)
+                std_dev_pearson_corrs[-1].append(std_dev_pearson_corr)
+
+
+    # Normalize the values for easier comparison as the values are on different scales.
+    # As the plot does not allow to show two axes, we normalize the values.
+
+    frobnorms_np0_1 = np.array(frobnorms)
+    correct_images_np0_1 = np.array(correct_images)
+    # Normalize the values to be between 0 and 1
+    frobnorms_normalized = (frobnorms_np0_1 - np.mean(frobnorms_np0_1, axis=1, keepdims=True)) / np.std(frobnorms_np0_1, axis=1, keepdims=True)
+    correct_images_normalized = (correct_images_np0_1 - np.mean(correct_images_np0_1, axis=1, keepdims=True)) / np.std(correct_images_np0_1, axis=1, keepdims=True)
+
+    # Create a new DataFrame for the normalized values
+    frobnorms_df = pd.DataFrame(frobnorms_normalized, columns=["1 Item", "2 Items", "3 Items", "4 Items", "5 Items"])
+    correct_images_df = pd.DataFrame(correct_images_normalized, columns=["1 Item", "2 Items", "3 Items", "4 Items", "5 Items"])
+    # Melt the DataFrames to long format
+    frobnorms_df = pd.melt(frobnorms_df)
+    correct_images_df = pd.melt(correct_images_df)
+    # Rename columns for clarity
+    frobnorms_df.columns = ["level", "frobnorm"]
+    correct_images_df.columns = ["level", "correct_images"]
+
+    # Rename value columns to match for unification
+    frobnorms_df_renamed = frobnorms_df.rename(columns={"frobnorm": "value"})
+    correct_images_df_renamed = correct_images_df.rename(columns={"correct_images": "value"})
+
+    # Add a column to distinguish types
+    frobnorms_df_renamed["type"] = "CheckEmbed Score"
+    correct_images_df_renamed["type"] = "Num Correct Images"
+
+    # Combine the dataframes
+    combined_df = pd.concat([frobnorms_df_renamed, correct_images_df_renamed], ignore_index=True)
+
+    colors = [(0, 0, 142), (142, 142, 3)]
+    colors = [tuple(c/255 for c in color) for color in colors]
+    # Plot with Seaborn
+    plt.figure(figsize=(8,5))
+    sns.violinplot(data=combined_df, x="level", y="value", hue="type", inner="quartile", palette=colors,
+                    alpha=0.4, split=True, gap=0.0)
+    # make fontsize 14
+    plt.xticks(fontsize=13)
+    plt.yticks(fontsize=13)
+
+    plt.ylabel("Score", fontsize=15)
+    plt.xlabel("Number of Items in the Image", fontsize=15)
+    plt.legend(loc='lower left')
+    plt.tight_layout()
+    plt.savefig("./frobnorms_correct_images_normalized.pdf")
 
 plot_description_combined()
 
@@ -952,6 +1052,23 @@ plot_runtime(
 plot_samples_accuracy(
     "results/wiki_bio",
     "plot_samples_accuracy.pdf"
+)
+
+# The following list contains the number of correct images for each prompt
+# with the values stemming from manual inspection of the images in the folder
+# "vision/imgs/counting_items"
+plot_vision_results(
+    correct_images = [
+        [10, 10, 9, 8, 1 ],
+        [10, 10, 8, 7, 5],
+        [10, 8, 10, 8, 4],
+        [9, 7, 6, 7, 6],
+        [10, 10, 7, 6, 6 ],
+        [10, 9, 8, 6, 5],
+        [10, 9, 6, 5, 3],
+        [10, 6, 4, 9, 2]
+    ],
+    path = "results/vision/CheckEmbed"
 )
 
 plot_wiki_bio(
