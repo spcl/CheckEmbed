@@ -51,8 +51,8 @@ to Open-Ended Tasks. In: arXiv preprint arXiv:2406.02524
 ----------------------------------------------------------------------
 
 
-CheckEmbed uses code from the Graph-of-Thoughts and SelfCheckGPT
-frameworks. You find their original licenses below.
+CheckEmbed uses code from the Graph-of-Thoughts, SelfCheckGPT
+and HalluDetect frameworks. You find their original licenses below.
 
 Graph-of-Thoughts (https://github.com/spcl/graph-of-thoughts)
 =============================================================
@@ -143,3 +143,40 @@ Potsawee Manakul, Adian Liusie, Mark J.F. Gales (2023): SelfCheckGPT:
 Zero-Resource Black-Box Hallucination Detection for Generative Large
 Language Models. In: arXiv preprint arXiv:2303.08896
 ----------------------------------------------------------------------
+
+
+HalluDetect (https://github.com/Rivas-AI/HalluDetect)
+=====================================================
+We used an adapted version of HalluDetect as a baseline for comparison
+with CheckEmbed.
+
+MIT License
+
+Copyright (c) 2024 Fidac
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Citation:
+-----------------------------------------------------------------------
+Ernesto Quevedo, Jorge Yero Salazar, Rachel Koerner, Pablo Rivas, Tomas
+Cerny (2024): Detecting Hallucinations in Large Language Model
+Generation: A Token Probability Approach. In: Proceedings of the 26th
+International Conference on Artificial Intelligence and Applications
+(ICAI '24)
+-----------------------------------------------------------------------

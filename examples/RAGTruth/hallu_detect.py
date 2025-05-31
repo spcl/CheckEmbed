@@ -1,15 +1,15 @@
-# Copyright (c) 2024 ETH Zurich.
+# Most of the code below is from the HalluDetect framework, which was
+# released under a MIT license:
+# https://github.com/Baylor-AI/HalluDetect
+#
+# for the remaining code:
+# Copyright (c) 2025 ETH Zurich.
 #                    All rights reserved.
 #
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
 # main author: Lorenzo Paleari
-#
-# Most of the code below is from the HalluDetect repository.
-# https://github.com/Baylor-AI/HalluDetect
-#
-# Released under the MIT License.
 
 import gc
 import json
@@ -149,8 +149,6 @@ class LLMModel:
                         self.getDiffMaximumWithMinimum(vocabProbs),
                     ]
                 )
-
-        # allFeatures = [minimum_token_prob, average_token_prob, maximum_diff_with_vocab, minimum_vocab_extreme_diff]
 
         allFeatures = {
             "mtp": minimum_token_prob,
@@ -586,7 +584,7 @@ def main(model, device):
         if (epoch + 1) % 10 == 0:
             print(
                 f"Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}, Training Accuracy: {train_accuracy:.4f}"
-            )  # , "Validation Accuracy": {val_accuracy:.4f}')
+            )
     
     X_test_tensor = torch.tensor(X_test_features, dtype=torch.float32).to(device)
     Y_test_tensor = torch.tensor(Y_test, dtype=torch.float32).view(-1, 1).to(device)

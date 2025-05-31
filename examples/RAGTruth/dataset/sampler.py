@@ -1,4 +1,4 @@
-# Copyright (c) 2024 ETH Zurich.
+# Copyright (c) 2025 ETH Zurich.
 #                    All rights reserved.
 #
 # Use of this source code is governed by a BSD-style license that can be
@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import openai
 from openai import OpenAI
+from typing import List, Tuple
 from vllm import LLM, SamplingParams
 
 client = OpenAI(
@@ -19,8 +20,31 @@ client = OpenAI(
   organization='org-'
 )
 
-def get_gpt4_answer(prompt, temperature, samples, llm):
-    def get_res(message):     
+def get_gpt4_answer(prompt: str, temperature: float, samples: int, llm: TODO) -> Tuple[List[str], float]:
+    """
+    Get responses from GPT4 concurrently for the given prompt.
+
+    :param prompt: Prompt used to query the language model.
+    :type prompt: str
+    :param temperature: Temperature for the language model.
+    :type temperature: float
+    :param samples: Number of responses to generate.
+    :type samples: int
+    :param llm: Language model to use. Parameter is not used for this function.
+    :type llm: TODO
+    :return: Tuple of the list of responses and the total cost.
+    :rtype: Tuple[List[str], float]
+    """
+
+    def get_res(message: str) -> Tuple[str, float]:
+        """
+        Get a single response from GPT4 for the given prompt.
+
+        :param message: Prompt to submit.
+        :type message: str
+        :return: Tuple of the returned response and the cost its generation.
+        :rtype: Tuple[str, float]
+        """
         while True:
             try:
                 res = client.chat.completions.create(
@@ -61,8 +85,31 @@ def get_gpt4_answer(prompt, temperature, samples, llm):
     
     return results, total_cost
 
-def get_gpt3_5_turbo_answer(prompt, temperature, samples, llm):
-    def get_res(message):     
+def get_gpt3_5_turbo_answer(prompt: str, temperature: float, samples: int, llm: TODO) -> Tuple[List[str], float]:
+    """
+    Get responses from GPT3.5-Turbo concurrently for the given prompt.
+
+    :param prompt: Prompt used to query the language model.
+    :type prompt: str
+    :param temperature: Temperature for the language model.
+    :type temperature: float
+    :param samples: Number of responses to generate.
+    :type samples: int
+    :param llm: Language model to use. Parameter is not used for this function.
+    :type llm: TODO
+    :return: Tuple of the list of responses and the total cost.
+    :rtype: Tuple[List[str], float]
+    """
+
+    def get_res(message: str) -> Tuple[str, float]:
+        """
+        Get a single response from GPT3.5-Turbo for the given prompt.
+
+        :param message: Prompt to submit.
+        :type message: str
+        :return: Tuple of the returned response and the cost its generation.
+        :rtype: Tuple[str, float]
+        """
         while True:
             try:
                 res = client.chat.completions.create(
@@ -103,7 +150,21 @@ def get_gpt3_5_turbo_answer(prompt, temperature, samples, llm):
     
     return results, total_cost
 
-def get_mistral_answer(prompt, temperature, samples, llm):
+def get_mistral_answer(prompt: str, temperature: float, samples: int, llm: TODO) -> Tuple[List[str], float]:
+    """
+    Get responses from a Mistral model for the given prompt.
+
+    :param prompt: Prompt used to query the language model.
+    :type prompt: str
+    :param temperature: Temperature for the language model.
+    :type temperature: float
+    :param samples: Number of responses to generate.
+    :type samples: int
+    :param llm: Language model to use.
+    :type llm: TODO
+    :return: Tuple of the list of responses and the total cost.
+    :rtype: Tuple[List[str], float]
+    """
     prompts = [prompt] * samples
 
     sampling_params = SamplingParams(temperature=temperature, top_p=1, max_tokens=8192)
@@ -113,22 +174,35 @@ def get_mistral_answer(prompt, temperature, samples, llm):
     texts = []
     for output in outputs:
         texts.append(output.outputs[0].text)
-    return texts, 0
+    return texts, 0.0
 
-def get_llama_answer(prompt, temperature, samples, llm):
-    
+def get_llama_answer(prompt: str, temperature: float, samples: int, llm: TODO) -> Tuple[List[str], float]:
+    """
+    Get responses from a LLaMA model for the given prompt.
+
+    :param prompt: Prompt used to query the language model.
+    :type prompt: str
+    :param temperature: Temperature for the language model.
+    :type temperature: float
+    :param samples: Number of responses to generate.
+    :type samples: int
+    :param llm: Language model to use.
+    :type llm: TODO
+    :return: Tuple of the list of responses and the total cost.
+    :rtype: Tuple[List[str], float]
+    """
     prompts = [prompt]*samples
 
     sampling_params = SamplingParams(temperature=temperature, top_p=1, max_tokens=8192)
 
     outputs = llm.generate(prompts, sampling_params)
 
-    # Print the outputs.
+    # Append the output
     texts = []
     for output in outputs:
         texts.append(output.outputs[0].text)
 
-    return texts, 0
+    return texts, 0.0
 
 
 name_model_dict = {
@@ -147,6 +221,9 @@ model_name_path = {
 }
 
 def main():
+    """
+    Run the sample generation loop.
+    """
     budget = 100
 
     model_temp = None
@@ -154,13 +231,6 @@ def main():
         model_temp = json.load(f)
 
     model_temp = sorted(model_temp, key=lambda x: x["model"])
-    # index = 0
-    # for i, element in enumerate(model_temp):
-    #     if element["model"] == "llama-2-7b-chat" and element["id"] == "17757":
-    #         index = i
-    #         break
-    # model_temp = model_temp[i+1:]
-
     
     prompt_soource = None
     with open("source_info.json", "r") as f:
