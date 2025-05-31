@@ -123,7 +123,7 @@ def read_description_file(typ, method, model, mode, emb_model):
 # written by Patrick Iff
 def read_all_description_files(mode):
     types = ["different","similar"]
-    methods = ["bert","scgpt","ce","judge"]
+    methods = ["bert","scgpt","judge","ce"]
     models = ["gpt","gpt4-turbo","gpt4-o"]
     embedding_models = ["gpt","sfr","e5","gte","ste400","ste1.5"]
     scgp_methods = ["bert","nli"]
@@ -207,8 +207,7 @@ def plot_description(mode, gpt4o_only = False):
         legend_patches = [mpatches.Patch(color=col, label=lab, alpha = 0.5) for (col, lab) in legend_patches]
         ax[i].legend(handles=list(legend_patches), loc='upper left', fontsize=9)
     # Save plot
-    #plt.savefig("plot_eval_violins_gpt_%s.png" % mode, format='png', dpi=600)
-    plt.savefig("plot_eval_violins_gpt_%s%s.pdf" % (mode , "_gpt4o" if gpt4o_only else ""))
+    plt.savefig("plot_eval_violins_%s%s.pdf" % (mode , "_gpt4o" if gpt4o_only else ""))
 
 
 # Read all files containing results
@@ -320,12 +319,16 @@ def plot_description_combined():
 
 
 # written by Patrick Iff
-def plot_hallucination(model, emb_model, judge, metric):
+def plot_hallucination(model, emb_model, judge, metric, datapath, outputname):
     # Config
     colors = {"bert" : "#999900", "scgpt_bert" : "#990099", "scgpt_nli": "#009999" ,"ce" : "#000099", "ce_got" : "#000099", "judge": "#990000"}
-    method_labels = {"GOT" : "GOT", "bert" : "BERTScore", "scgpt_bert" : "SelfCheckGPT (BERT)", "scgpt_nli": "SelfCheckGPT (NLI)", "ce" : "CheckEmbed (STE1.5)", "ce_got" : "CheckEmbed", "judge": "LLM-as-a-Judge (LLaMA-8B)"}
+    method_labels = {"GOT" : "GOT", "bert" : "BERTScore", "scgpt_bert" : "SelfCheckGPT (BERT)", "scgpt_nli": "SelfCheckGPT (NLI)", "ce_got" : "CheckEmbed", "judge": "LLM-as-a-Judge (LLaMA-8B)"}
+    if emb_model == "ste1.5":
+        method_labels["ce"] = "CheckEmbed (STE1.5)"
+    elif emb_model == "gte":
+        method_labels["ce"] = "CheckEmbed (GTE)"
     # Read data
-    data = read_all_files(model, emb_model, judge, metric, "incremental_forced_hallucination/scientific_descriptions")
+    data = read_all_files(model, emb_model, judge, metric, datapath)
     # Create plot
     (fig, ax) = plt.subplots(1, 1, figsize=(9, 3.25))
     fig.subplots_adjust(left=0.08, right=0.99, top=0.9, bottom=0.135)
@@ -344,7 +347,7 @@ def plot_hallucination(model, emb_model, judge, metric):
     # Configure plot
     ax.set_xlim(-1,xpos+1)
     ax.grid(axis = "y")
-    ax.set_xlabel(" " * 17 + "Number of introduced Errors")
+    ax.set_xlabel(" " * 17 + "Error")
     if metric == "score":
         ax.set_ylim(0,1)
         ax.set_ylabel("Score (higher: assessed as more similar)")
@@ -361,8 +364,7 @@ def plot_hallucination(model, emb_model, judge, metric):
     legend_patches = sorted(legend_patches, key=lambda x: list(method_labels.values()).index(x.get_label()))
     ax.legend(handles=list(legend_patches), loc='lower center', fontsize=9, ncol = 5, bbox_to_anchor=(0.5, 0.985))
 
-    #plt.savefig("plot_halucinate_%s_%s_%s.png" % (model, emb_model, metric), format='png', dpi=600)
-    plt.savefig("plot_halucinate_%s_%s_%s.pdf" % (model, emb_model, metric))
+    plt.savefig("plot_hallucinate_%s_%s_%s_%s.pdf" % (model, emb_model, metric, outputname))
 
 
 # written by Robert Gerstenberger
@@ -434,18 +436,18 @@ def read_runtimes(filename: str, folders: List[str], methods: List[str], embeddi
     """
     Read the runtimes from the file.
 
-    :param filename: The name of the file containing the runtimes.
+    :param filename: Name of the file containing the runtimes.
     :type filename: str
-    :param folders: The folders containing the runtimes.
+    :param folders: Folders containing the runtimes.
     :type folders: List[str]
-    :param methods: The methods used.
+    :param methods: Used methods.
     :type methods: List[str]
-    :param embedding_models: The embedding models used.
+    :param embedding_models: Used embedding models.
     :type embedding_models: List[str]
-    :param scgpt_methods: The SelfCheckGPT methods used.
+    :param scgpt_methods: Used SelfCheckGPT methods.
     :type scgpt_methods: List[Optional[str]]
 
-    :return: The runtimes.
+    :return: Runtimes.
     :rtype: Dict[str, Dict[str, Dict[str, Dict[str, List[float]]]]]
     """
 
@@ -975,6 +977,11 @@ plot_description(
 )
 
 plot_description(
+    "generic",
+    True
+)
+
+plot_description(
     "precise"
 )
 
@@ -1018,6 +1025,17 @@ plot_hallucination(
     "ste1.5",
     "llama8b",
     "score",
+    "incremental_forced_hallucination/scientific_descriptions",
+    "scientific_descriptions"
+)
+
+plot_hallucination(
+    "gpt4-o",
+    "gte",
+    "llama8b",
+    "score",
+    "incremental_forced_hallucination/legal_summaries",
+    "legal_summaries"
 )
 
 plot_runtime(
@@ -1055,8 +1073,7 @@ plot_samples_accuracy(
 )
 
 # The following list contains the number of correct images for each prompt
-# with the values stemming from manual inspection of the images in the folder
-# "vision/imgs/counting_items"
+# from manual inspection of the generated images.
 plot_vision_results(
     correct_images = [
         [10, 10, 9, 8, 1 ],
