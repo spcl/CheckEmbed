@@ -319,16 +319,21 @@ def plot_description_combined():
 
 
 # written by Patrick Iff
-def plot_hallucination(model, emb_model, judge, metric, datapath, outputname):
+def plot_hallucination(model, emb_model, judge, metric, input_path, output_prefix):
     # Config
     colors = {"bert" : "#999900", "scgpt_bert" : "#990099", "scgpt_nli": "#009999" ,"ce" : "#000099", "ce_got" : "#000099", "judge": "#990000"}
-    method_labels = {"GOT" : "GOT", "bert" : "BERTScore", "scgpt_bert" : "SelfCheckGPT (BERT)", "scgpt_nli": "SelfCheckGPT (NLI)", "ce_got" : "CheckEmbed", "judge": "LLM-as-a-Judge (LLaMA-8B)"}
-    if emb_model == "ste1.5":
-        method_labels["ce"] = "CheckEmbed (STE1.5)"
-    elif emb_model == "gte":
-        method_labels["ce"] = "CheckEmbed (GTE)"
+    ce_labels = {
+        "gpt" : "CheckEmbed (GPT)",
+        "sfr" : "CheckEmbed (SFR)",
+        "e5" : "CheckEmbed (E5)",
+        "gte" : "CheckEmbed (GTE)",
+        "ste400" : "CheckEmbed (STE400)",
+        "ste1.5" : "CheckEmbed (STE1.5)"
+    }
+
+    method_labels = {"GOT" : "GOT", "bert" : "BERTScore", "scgpt_bert" : "SelfCheckGPT (BERT)", "scgpt_nli": "SelfCheckGPT (NLI)", "judge": "LLM-as-a-Judge (LLaMA-8B)", "ce" : ce_labels[emb_model], "ce_got" : ce_labels[emb_model]}
     # Read data
-    data = read_all_files(model, emb_model, judge, metric, datapath)
+    data = read_all_files(model, emb_model, judge, metric, input_path)
     # Create plot
     (fig, ax) = plt.subplots(1, 1, figsize=(9, 3.25))
     fig.subplots_adjust(left=0.08, right=0.99, top=0.9, bottom=0.135)
@@ -364,7 +369,7 @@ def plot_hallucination(model, emb_model, judge, metric, datapath, outputname):
     legend_patches = sorted(legend_patches, key=lambda x: list(method_labels.values()).index(x.get_label()))
     ax.legend(handles=list(legend_patches), loc='lower center', fontsize=9, ncol = 5, bbox_to_anchor=(0.5, 0.985))
 
-    plt.savefig("plot_hallucinate_%s_%s_%s_%s.pdf" % (model, emb_model, metric, outputname))
+    plt.savefig("%s_%s_%s_%s.pdf" % (output_prefix, model, emb_model, metric))
 
 
 # written by Robert Gerstenberger
@@ -755,7 +760,7 @@ def load_rag_data(curr_dir: str):
         correct_data_bin = [0.0 if len(d["labels"]) > 0 else 1.0 for d in correct_data]
         correct_totals.extend(correct_data_bin)
 
-        # Hallu Detection
+        # HalluDetect
         for file in os.listdir(os.path.join(curr_dir, "HalluDetect", f"{task}")):
             name = file.split("mtp")[0]
             with open(os.path.join(curr_dir, "HalluDetect", f"{task}", file), "r") as f:
@@ -848,7 +853,7 @@ def plot_RAGTruth(curr_dir: str, output_name: str):
     header +=  "| :---: |" + " :---: |" * 15 + "\n"
     header += "| | Precision | Recall | F1 | | Precision | Recall | F1 | | Precision | Recall | F1 | | Precision | Recall | F1 |\n"
     
-    # Fill all the results now
+    # Add the results
     rows = []
     rows.append("| HalluDetection |  |  |  |  |  |  |  | | | |  |  |  |  |  |\n")
     for model in hallu_scores["summary"].keys():
@@ -1022,20 +1027,20 @@ plot_heatmap(
 
 plot_hallucination(
     "gpt4-o",
-    "ste1.5",
-    "llama8b",
-    "score",
-    "incremental_forced_hallucination/scientific_descriptions",
-    "scientific_descriptions"
-)
-
-plot_hallucination(
-    "gpt4-o",
     "gte",
     "llama8b",
     "score",
     "incremental_forced_hallucination/legal_summaries",
-    "legal_summaries"
+    "plot_hallucinate_legal"
+)
+
+plot_hallucination(
+    "gpt4-o",
+    "ste1.5",
+    "llama8b",
+    "score",
+    "incremental_forced_hallucination/scientific_descriptions",
+    "plot_hallucinate_scientific"
 )
 
 plot_runtime(
