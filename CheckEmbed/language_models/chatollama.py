@@ -7,10 +7,11 @@
 # main author: Lorenzo Paleari
 
 
-from typing import List, Dict, Union
+from typing import Dict, List, Union
 
 from langchain_ollama import ChatOllama
 from pydantic import BaseModel
+
 from CheckEmbed.language_models import AbstractLanguageModel
 
 
