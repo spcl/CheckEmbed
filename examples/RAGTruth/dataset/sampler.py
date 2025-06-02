@@ -20,7 +20,7 @@ client = OpenAI(
   organization='org-'
 )
 
-def get_gpt4_answer(prompt: str, temperature: float, samples: int, llm: TODO) -> Tuple[List[str], float]:
+def get_gpt4_answer(prompt: str, temperature: float, samples: int, llm: LLM) -> Tuple[List[str], float]:
     """
     Get responses from GPT4 concurrently for the given prompt.
 
@@ -31,7 +31,7 @@ def get_gpt4_answer(prompt: str, temperature: float, samples: int, llm: TODO) ->
     :param samples: Number of responses to generate.
     :type samples: int
     :param llm: Language model to use. Parameter is not used for this function.
-    :type llm: TODO
+    :type llm: LLM
     :return: Tuple of the list of responses and the total cost.
     :rtype: Tuple[List[str], float]
     """
@@ -85,7 +85,7 @@ def get_gpt4_answer(prompt: str, temperature: float, samples: int, llm: TODO) ->
     
     return results, total_cost
 
-def get_gpt3_5_turbo_answer(prompt: str, temperature: float, samples: int, llm: TODO) -> Tuple[List[str], float]:
+def get_gpt3_5_turbo_answer(prompt: str, temperature: float, samples: int, llm: LLM) -> Tuple[List[str], float]:
     """
     Get responses from GPT3.5-Turbo concurrently for the given prompt.
 
@@ -96,7 +96,7 @@ def get_gpt3_5_turbo_answer(prompt: str, temperature: float, samples: int, llm: 
     :param samples: Number of responses to generate.
     :type samples: int
     :param llm: Language model to use. Parameter is not used for this function.
-    :type llm: TODO
+    :type llm: LLM
     :return: Tuple of the list of responses and the total cost.
     :rtype: Tuple[List[str], float]
     """
@@ -150,7 +150,7 @@ def get_gpt3_5_turbo_answer(prompt: str, temperature: float, samples: int, llm: 
     
     return results, total_cost
 
-def get_mistral_answer(prompt: str, temperature: float, samples: int, llm: TODO) -> Tuple[List[str], float]:
+def get_mistral_answer(prompt: str, temperature: float, samples: int, llm: LLM) -> Tuple[List[str], float]:
     """
     Get responses from a Mistral model for the given prompt.
 
@@ -161,7 +161,7 @@ def get_mistral_answer(prompt: str, temperature: float, samples: int, llm: TODO)
     :param samples: Number of responses to generate.
     :type samples: int
     :param llm: Language model to use.
-    :type llm: TODO
+    :type llm: LLM
     :return: Tuple of the list of responses and the total cost.
     :rtype: Tuple[List[str], float]
     """
@@ -176,7 +176,7 @@ def get_mistral_answer(prompt: str, temperature: float, samples: int, llm: TODO)
         texts.append(output.outputs[0].text)
     return texts, 0.0
 
-def get_llama_answer(prompt: str, temperature: float, samples: int, llm: TODO) -> Tuple[List[str], float]:
+def get_llama_answer(prompt: str, temperature: float, samples: int, llm: LLM) -> Tuple[List[str], float]:
     """
     Get responses from a LLaMA model for the given prompt.
 
@@ -187,7 +187,7 @@ def get_llama_answer(prompt: str, temperature: float, samples: int, llm: TODO) -
     :param samples: Number of responses to generate.
     :type samples: int
     :param llm: Language model to use.
-    :type llm: TODO
+    :type llm: LLM
     :return: Tuple of the list of responses and the total cost.
     :rtype: Tuple[List[str], float]
     """
