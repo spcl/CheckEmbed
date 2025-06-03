@@ -12,7 +12,7 @@ The following sections describe how to instantiate individual models and how to 
 ## LLM Instantiation
 
 - Create a copy of `config_template.json` named `config.json`. (Not necessary for local models)
-- Fill configuration details based on the used model (below).
+- Fill in the configuration details based on the used model (below).
 
 ### GPT-4 / GPT-3.5
 
@@ -104,14 +104,14 @@ def query(
     # Return LLM response structure (not only raw strings)    
 ```
 
-- Implement the `load_model`, `unload_model` and  `get_response_texts` abstract method that is used to get a list of raw texts from the LLM response structure produced by `query`.
+- Implement the `load_model`, `unload_model` and  `get_response_texts` abstract methods that are used to load/unload the model from the GPU (if necessary) and to get a list of raw texts from the LLM response structure produced by `query` respectively.
 
 ```python
 def load_model(self, device: str = None) -> None:
     """
     Load the model and tokenizer based on the given model name.
 
-    :param device: The device to load the model on.
+    :param device: The device to load the model on. Defaults to None.
     :type device: str
     """
 

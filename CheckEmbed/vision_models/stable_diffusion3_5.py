@@ -4,8 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# main author: Lorenzo Paleari
-#              Eric Schreiber
+# main authors: Lorenzo Paleari
+#               Eric Schreiber
 
 import gc
 from typing import List, Union
@@ -53,7 +53,7 @@ class StableDiffusion3(AbstractVisionModel):
         """
         Load the model and tokenizer based on the given model name.
 
-        :param device: The device to load the model on.
+        :param device: The device to load the model on. Defaults to None.
         :type device: str
         """
 
@@ -96,6 +96,5 @@ class StableDiffusion3(AbstractVisionModel):
             ).images[0]
 
             images.append(image)
-        
+
         return images
-        

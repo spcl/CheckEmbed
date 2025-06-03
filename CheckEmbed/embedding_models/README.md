@@ -17,7 +17,7 @@ The following sections describe how to instantiate individual models and how to 
 ## Embedding Model Instantiation
 
 - Create a copy of `config_template.json` named `config.json` in the CheckEmbed folder. (Not necessary for local models)
-- Fill configuration details based on the used model (below).
+- Fill in the configuration details based on the used model (below).
 
 ### Embedding-Text-Large / Embedding-Text-Small
 
@@ -114,14 +114,14 @@ class CustomLanguageModel(AbstractEmbeddingModel):
         # Instantiate model if needed
 ```
 
-- Implement the `load_model`, `unload_model` and `generate_embedding` abstract method that is used to get a list of embeddings from the model (remote API call or local model inference).
+- Implement the `load_model`, `unload_model` and `generate_embedding` abstract methods that are used to load/unload the model from the GPU (if necessary) and get a list of embeddings from the model (remote API call or local model inference) respectively.
 
 ```python
 def load_model(self, device: str = None) -> None:
     """
     Load the model and tokenizer based on the given model name.
 
-    :param device: The device to load the model on.
+    :param device: The device to load the model on. Defaults to None.
     :type device: str
     """
 
@@ -129,10 +129,10 @@ def unload_model(self) -> None:
     """
     Unload the model and tokenizer.
     """
-    
+
 def generate_embedding(
         self,
-        input: Union[List[str], str]
+        input: Union[List[Any], Any]
     ) -> List[float]:
     # Call model and retrieve an embedding
     # Return model response

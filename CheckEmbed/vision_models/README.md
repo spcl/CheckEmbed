@@ -2,25 +2,25 @@
 
 The Vision Models module is responsible for managing the vision models.
 
-Currently, the framework supports the following vision models:
+Currently, the framework supports the following vision model:
 
 - stabilityai/stable-diffusion-3.5-medium (local - GPU with 12GB VRAM recommended, model size is roughly 6GB )
 
-The following sections describe how to instantiate individual models and how to add new models to the framework.
+The following sections describe how to instantiate the model and how to add new models to the framework.
 
 ## Visual Model Instantiation
 
 If your model needs a configuration file, follow these steps:
 
 - Create a copy of `config_template.json` named `config.json` in the CheckEmbed folder. (Not necessary for local models)
-- Fill configuration details based on the used model (below).
+- Fill configuration details based on the used model.
 
 ### Local Models
 
-The framework currently supports the following local models: `stabilityai/stable-diffusion-3.5-medium`.
+The framework currently supports the following local model: `stabilityai/stable-diffusion-3.5-medium`.
 
 - Instantiate the visual model based on the owned device.
-- Device can be specified in the `Scheduler`, more [here](/CheckEmbed/scheduler/scheduler.py)
+- Device can be specified in the `Scheduler`, more [here](/CheckEmbed/scheduler/scheduler.py).
 
 ```python
 stable_diffusion = vision_models.StableDiffusion3(
@@ -45,25 +45,25 @@ class CustomVisualModel(AbstractVisualModel):
         self,
         config_path: str = "",
         model_name: str = "official model-name",
-        name: str = "CustomLanguageModel",
+        name: str = "CustomVisionModel",
         cache: bool = False
     ) -> None:
         super().__init__(config_path, model_name, name, cache)
         self.config: Dict = self.config[model_name]
-        
+
         # Load data from configuration into variables if needed
 
         # Instantiate model if needed
 ```
 
-- Implement the `load_model`, `unload_model` and `generate_image` abstract method that is used to get a list of images from the model (remote API call or local model inference).
+- Implement the `load_model`, `unload_model` and `generate_image` abstract methods that are used to load/unload the model from the GPU (if necessary) and get a list of images from the model (remote API call or local model inference) respectively.
 
 ```python
 def load_model(self, device: str = None) -> None:
     """
     Load the model and tokenizer based on the given model name.
 
-    :param device: The device to load the model on.
+    :param device: The device to load the model on. Defaults to None.
     :type device: str
     """
 

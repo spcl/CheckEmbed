@@ -5,8 +5,8 @@
 # found in the LICENSE file.
 #
 # main author: Eric Schreiber
-# 
-# Contributors: Lorenzo Paleari
+#
+# contributions: Lorenzo Paleari
 
 import logging
 import os
@@ -82,7 +82,7 @@ class CustomParser(Parser):
 
         :param dataset_path: The path to the dataset.
         :type dataset_path: str
-        :param list: The list of two different topics to be used in the prompts.
+        :param list: The list of input prompts.
         :type list: List[str]
         """
         super().__init__(dataset_path)
@@ -102,7 +102,7 @@ class CustomParser(Parser):
             prompts.extend(item)
 
         return prompts
-    
+
     def ground_truth_extraction(self, custom_inputs: Any = None) -> List[str]:
         """
         Parse the dataset and extract the ground truth.
@@ -116,19 +116,7 @@ class CustomParser(Parser):
 
     def answer_parser(self, responses: List[List[Union[str, Image]]], custom_inputs: Any = None) -> List[List[Union[str, Image]]]:
         """
-        Parse the responses from the model.
-
-        The default behavior is to return the responses as they are.
-        Overwrite this method if you want to parse the responses in a different way. You can use the CustomParser
-        classes in the examples folder as reference.
-
-        Remember that the responses returned from this method will be stored in a file and used for the evaluation,
-        so please follow the following format, when returning the responses:
-        [
-            [response1_prompt1, response2_prompt1, ...],
-            [response1_prompt2, response2_prompt2, ...],
-            ...
-        ]
+        Parse the responses from the model: Return the responses as they are.
 
         :param responses: The responses from the model.
         :type responses: List[List[Union[str, Image]]]
@@ -142,15 +130,15 @@ class CustomParser(Parser):
 
 def start(current_dir: str, list: List[str]) -> None:
     """
-    Execute the different description use case.
+    Execute the vision use case.
 
     :param current_dir: Directory path from the the script is called.
     :type current_dir: str
-    :param list: The list of two different topics to be used in the prompts.
+    :param list: The list of input prompts.
     :type list: List[str]
     """
 
-    # Initialize the parser and the embedder
+    # Initialize the parser, the vision and embedding models
     customParser = CustomParser(
         dataset_path = current_dir,
         list = list
@@ -177,16 +165,15 @@ def start(current_dir: str, list: List[str]) -> None:
     )
 
     # The order of lm_names and embedding_lm_names should be the same 
-    # as the order of the language models and embedding language models respectively.
+    # as the order of the generation models and embedding models respectively.
     scheduler.run(
         startingPoint = StartingPoint.PROMPT,
         bertScore = False,
         selfCheckGPT = False,
         llm_as_a_judge = False,
         vision = True,
-        rebase_results=True,
+        rebase_results = True,
         num_samples = 10,
-        bertScore_model = "microsoft/deberta-xlarge-mnli",
         device = "cuda",
         batch_size = 64 # it may be necessary to reduce the batch size if the model is too large
     )

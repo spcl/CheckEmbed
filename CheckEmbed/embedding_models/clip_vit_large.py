@@ -4,8 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# main author: Lorenzo Paleari
-#              Eric Schreiber
+# main authors: Lorenzo Paleari
+#               Eric Schreiber
 
 import gc
 from typing import List, Union
@@ -43,13 +43,13 @@ class ClipVitLarge(AbstractEmbeddingModel):
         """
         Load the model and tokenizer based on the given model name.
 
-        :param device: The device to load the model on.
+        :param device: The device to load the model on. Defaults to None.
         :type device: str
         """
         self.model = CLIPModel.from_pretrained(self.model_name).eval()
         self.processor = CLIPProcessor.from_pretrained(self.processor_name)
         self.model = self.model.to(device)
-    
+
     def unload_model(self) -> None:
         """
         Unload the model and tokenizer.
@@ -67,9 +67,9 @@ class ClipVitLarge(AbstractEmbeddingModel):
         """
         Abstract method to generate embedding for the given input text.
 
-        :param input: The input text to embed.
+        :param input: The input image to embed.
         :type input: Union[List[Image], Image]
-        :return: The embeddings of the text.
+        :return: The embeddings of the image.
         :rtype: List[List[float]]
         """
         if not isinstance(input, List):

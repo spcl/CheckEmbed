@@ -56,7 +56,7 @@ class Scheduler:
             budget: int = 10,
             parser: Parser = None, 
             embedder: Embedder = Embedder(), 
-            lm: List[Union[AbstractLanguageModel, AbstractVisionModel]] = None, 
+            lm: List[Union[AbstractLanguageModel, AbstractVisionModel]] = None,
             embedding_lm: List[AbstractEmbeddingModel] = None,
             operations: List[Operation] = [],
             bertScoreOperation: BertScoreOperation = None,
@@ -78,7 +78,7 @@ class Scheduler:
         :type parser: Parser
         :param embedder: An instance of the Embedder class required for the embedding generation. Defaults to the abstract Embedder.
         :type embedder: Embedder
-        :param lm: A list of AbstractLanguageModel or AbstractVisionModel instances representing the language models used for sampling. Defaults to None.
+        :param lm: A list of AbstractLanguageModel or AbstractVisionModel instances representing the models used for sampling. Defaults to None.
         :type lm: List[Union[AbstractLanguageModel, AbstractVisionModel]]
         :param embedding_lm: A list of AbstractEmbeddingModel instances representing the embedding models used for the embedding generation. Defaults to None.
         :type embedding_lm: List[AbstractEmbeddingModel]
@@ -131,20 +131,20 @@ class Scheduler:
 
     def _samples_generation(self, num_samples: int, lm_names: List[str], vision_model: bool, device: str, time_performance: bool) -> bool:
         """
-        Generate samples for the given prompts using the language models and save them to a json file.
+        Generate samples for the given prompts using the models and save them to a json file.
         The number of sample generated for each prompt is given by num_samples.
 
         :param num_samples: The number of samples to generate for each prompt.
         :type num_samples: int
-        :param lm_names: The names of the language models to be used for sampling.
+        :param lm_names: The names of the models to be used for sampling.
         :type lm_names: List[str]
-        :param vision_model: A flag indicating whether the language models are vision models.
+        :param vision_model: A flag indicating whether the models are vision models.
         :type vision_model: bool
         :param device: The Torch device to use for the operations.
         :type device: str
         :param time_performance: A flag indicating whether to measure the runtime of the operation.
         :type time_performance: bool
-        :return: False if the language models are not available or the prompts are missing, True otherwise.
+        :return: False if the models are not available or the prompts are missing, True otherwise.
         :rtype: bool
         """
 
@@ -248,21 +248,23 @@ class Scheduler:
             embedding_lm_names: List[str],
             ground_truth: bool,
             vision_model: bool,
-            num_sample: int,
+            num_samples: int,
             device: str,
             time_performance: bool
         ) -> bool:
         """
         Generate embeddings for the given samples using the embedding models and save them to a json file.
 
-        :param lm_names: The names of the language models used for sampling.
+        :param lm_names: The names of the models used for sampling.
         :type lm_names: List[str]
         :param embedding_lm_names: The names of the embedding models used for the embedding.
         :type embedding_lm_names: List[str]
         :param ground_truth: A flag indicating whether to generate embeddings for the ground truth.
         :type ground_truth: bool
-        :param vision_model: A flag indicating whether the language models are vision models.
+        :param vision_model: A flag indicating whether the models are vision models.
         :type vision_model: bool
+        :param num_samples: The number of samples.
+        :type num_samples: int
         :param device: The Torch device to use for the operations.
         :type device: str
         :param time_performance: A flag indicating whether to measure the runtime of the operation.
@@ -317,9 +319,9 @@ class Scheduler:
                     samples = []
                     try:
                         num_files = len(os.listdir(os.path.join(self.workdir, "images")))
-                        for i in range(int(num_files / num_sample)):
+                        for i in range(int(num_files / num_samples)):
                             sample = []
-                            for j in range(num_sample):
+                            for j in range(num_samples):
                                 sample.append(Image.open(os.path.join(self.workdir, "images", f"{lm_name}_image_{i}_{j}.png")))
                             samples.append(sample)
                     except Exception as e:

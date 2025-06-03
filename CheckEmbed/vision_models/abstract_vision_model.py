@@ -43,7 +43,7 @@ class AbstractVisionModel(ABC):
         if config_path is not None:
             self.load_config(config_path)
         self.name: str = name
-        try: 
+        try:
             if self.config is not None:
                 if self.config[model_name] is not None:
                     self.name = self.config[model_name]["name"]
@@ -75,7 +75,7 @@ class AbstractVisionModel(ABC):
         """
         Abstract method to load the vision model.
 
-        :param device: The device to load the model on.
+        :param device: The device to load the model on. Defaults to None.
         :type device: str
         """
         pass
@@ -92,7 +92,7 @@ class AbstractVisionModel(ABC):
         """
         Abstract method to generate images for the given input text.
 
-        :param input: The input text to embed.
+        :param input: A list of prompts or a single prompt string to generate images for.
         :type input: Union[List[str], str]
         :return: The generated images.
         :rtype: List[Image]

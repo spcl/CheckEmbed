@@ -7,7 +7,7 @@
 # main author: Lorenzo Paleari
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Union
+from typing import Any, Dict, List, Union
 import json
 import logging
 
@@ -73,7 +73,7 @@ class AbstractEmbeddingModel(ABC):
         """
         Abstract method to load the embedding model.
 
-        :param device: The device to load the model on.
+        :param device: The device to load the model on. Defaults to None.
         :type device: str
         """
         pass
