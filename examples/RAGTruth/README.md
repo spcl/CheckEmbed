@@ -14,7 +14,7 @@ For each task, answers are generated using **6 different LLMs**, resulting in a 
 
 * **5,658** Summarization responses
 * **6,198** Data-to-Text responses
-* **5,934** QA responses
+* **5,934** Question Answering responses
 
 These generated responses are located in the `dataset/` folder and are split into `training_data.json` and `response.json` (test) sets.
 
@@ -25,7 +25,7 @@ These generated responses are located in the `dataset/` folder and are split int
 
 ## Evaluation Setup
 
-Following the official paper [RAGTruth instructions](https://arxiv.org/abs/2401.00396), we generated **10 samples per LLM-generated answer** in the test set. These synthetic samples enable hallucination detection evaluation using methods such as:
+Following the instructions of the official [paper](https://arxiv.org/abs/2401.00396), we generated **10 samples per LLM-generated answer** in the test set. These synthetic samples enable hallucination detection evaluation using methods such as:
 
 * **CheckEmbed**
 * [**SelfCheckGPT**](https://github.com/potsawee/selfcheckgpt)
@@ -44,19 +44,18 @@ We also include an adjusted version of [**HalluDetect**](https://github.com/Bayl
 
 ## How to Run
 
-To reproduce the experiments:
+Please execute the following steps to reproduce the experiment:
 
 ```bash
 cd examples/RAGTruth/dataset
 # (Optional) Run sampling script if not already done
-# The samples are already given alongside the repository
+# We already provide the necessary additional samples in the repository.
 python3 sampler.py
 
-# Evaluate using CE
-cd examples/RAGTruth
+# Evaluate using CheckEmbed
+cd ..
 python3 main.py
 
 # Run HalluDetect
-cd examples/RAGTruth
 python3 hallu_detect.py
 ```

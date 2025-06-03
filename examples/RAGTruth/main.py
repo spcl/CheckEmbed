@@ -46,10 +46,10 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, best: bool = Fals
 
     :param current_dir: The current directory.
     :type current_dir: str
-    :param num_chunks: The number of chunks. Defaults to 1.
-    :type num_chunks: int
     :param start: The starting point. Defaults to StartingPoint.PROMPT.
     :type start: StartingPoint
+    :param best: Flag to indicate which operations to run. Defaults to False.
+    :type best: bool
     """
 
     # Config file for the LLM(s)
@@ -100,12 +100,12 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, best: bool = Fals
         os.path.join(current_dir, "Judge"),
         current_dir,
         prompt_template = prompt_template,
-        original="../Originals",
-        original_position=1,
+        original = "../Originals",
+        original_position = 1,
     )
 
     embedd_large = embedding_models.EmbeddingGPT(
-        config_path=config_path,
+        config_path = config_path,
         model_name = "gpt-embedding-large",
         cache = False,
     )
@@ -143,9 +143,9 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, best: bool = Fals
         current_dir,
         logging_level = logging.DEBUG,
         budget = 30,
-        selfCheckGPTOperation=[selfCheckGPT_BERT_Operation, selfCheckGPT_NLI_Operation],
+        selfCheckGPTOperation = [selfCheckGPT_BERT_Operation, selfCheckGPT_NLI_Operation],
         embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct, stella_en_400M_v5, stella_en_15B_v5],
-        llm_as_a_judge_Operation=llm_judge_Operation,
+        llm_as_a_judge_Operation = llm_judge_Operation,
         llm_as_a_judge_models = [gpt4_o_mini, gpt4_o, llama70, llama8],
     )
 
@@ -155,7 +155,7 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, best: bool = Fals
         startingPoint = start,
         selfCheckGPT = best,
         bertScore = best,
-        llm_as_a_judge= best,
+        llm_as_a_judge = best,
         checkEmbed = not best,
         rebase_results = True,
         lm_names = ["qa", "summary", "data2text"],
@@ -166,6 +166,12 @@ def start(current_dir: str, start: int = StartingPoint.PROMPT, best: bool = Fals
     )
 
 def prepare_data(current_dir: str) -> None:
+    """
+    Data preparation.
+
+    :param current_dir: Path to where the data is stored.
+    :type current_dir: str
+    """
     if not os.path.exists(current_dir + "/SCGPT_samples"):
         os.makedirs(current_dir + "/SCGPT_samples")
 
