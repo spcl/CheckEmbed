@@ -130,7 +130,7 @@ prompt_template = PromptTemplate(
     template="""
 ### INSTRUCTION ###
 
-You are a linguistic expert. You will be given two separate descriptions. You job is to rate how similar the two descriptions are based on the content of the description. You will need to output a score from 0 to 100, where 0 means the description are about completely different things, and 100 means the descriptions are about the same thing.
+You are a linguistic expert. You will be given two separate descriptions. Your job is to rate how similar the two descriptions are based on the content of the description. You will need to output a score from 0 to 100, where 0 means the description are about completely different things, and 100 means the descriptions are about the same thing. Use the full range of scores, 0, 1, 2, ... 10, 20, ... 90, 100.
 
 ### OUTPUT ###
 
