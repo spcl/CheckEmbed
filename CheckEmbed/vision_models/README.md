@@ -8,7 +8,7 @@ Currently, the framework supports the following vision model:
 
 The following sections describe how to instantiate the model and how to add new models to the framework.
 
-## Visual Model Instantiation
+## Vision Model Instantiation
 
 If your model needs a configuration file, follow these steps:
 
@@ -19,7 +19,7 @@ If your model needs a configuration file, follow these steps:
 
 The framework currently supports the following local model: `stabilityai/stable-diffusion-3.5-medium`.
 
-- Instantiate the visual model based on the owned device.
+- Instantiate the vision model based on the owned device.
 - Device can be specified in the `Scheduler`, more [here](/CheckEmbed/scheduler/scheduler.py).
 
 ```python
@@ -32,15 +32,15 @@ stable_diffusion = vision_models.StableDiffusion3(
     )
 ```
 
-## Adding Visual Models
+## Adding Vision Models
 
-More visual models can be added by following these steps:
+More vision models can be added by following these steps:
 
-- Create new class as a subclass of `AbstractVisualModel`.
-- Use the constructor for loading the configuration and instantiating the visual model (if needed).
+- Create new class as a subclass of `AbstractVisionModel`.
+- Use the constructor for loading the configuration and instantiating the vision model (if needed).
 
 ```python
-class CustomVisualModel(AbstractVisualModel):
+class CustomVisionModel(AbstractVisionModel):
     def __init__(
         self,
         config_path: str = "",
