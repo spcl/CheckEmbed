@@ -11,6 +11,7 @@ authors = [
   { name="Ales Kubicek", email="akubicek@student.ethz.ch" },
   { name="Robert Gerstenberger", email="gerstenberger.robert@gmail.com" },
   { name="Patrick Iff", email="patrick.iff@inf.ethz.ch" },
+  { name="Eric Schreiber", email="eric.schreiber@inf.ethz.ch" },
 ]
 description = "Python package for 'CheckEmbed'"
 readme = "README.md"
@@ -43,6 +44,9 @@ dependencies = [
   "langchain>=0.2.11",
   "langchain_ollama",
   "pydantic>=2.8.2",
+  "pandas",
+  "scipy",
+  "sklearn",
   "vllm"
 ]
 
