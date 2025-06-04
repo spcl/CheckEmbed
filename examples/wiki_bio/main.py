@@ -25,11 +25,8 @@ You are a linguistic and historian expert. You will be given a passage of text c
 
 ### OUTPUT ###
 
-The output should be a single number, which is the score from 0 to 100.
-You CANNOT output any other text.
-You CANNOT output a decimal number.
-You MUST output an integer number.
-You MUST NOT output a number that is less than 0 or greater than 100.
+The output should be a single number, which is the score from 0 to 100. 
+You CANNOT output any other text. You CANNOT output a decimal number. You MUST output an integer number. You MUST NOT output a number that is less than 0 or greater than 100.
 
 ### INPUT ###
 {aaa}
@@ -46,10 +43,7 @@ You are a linguistic and historian expert. You will be given a passage of text c
 ### OUTPUT ###
 
 The output should be a single number, which is the score from 0 to 100.
-You CANNOT output any other text.
-You CANNOT output a decimal number.
-You MUST output an integer number.
-You MUST NOT output a number that is less than 0 or greater than 100.
+You CANNOT output any other text. You CANNOT output a decimal number. You MUST output an integer number. You MUST NOT output a number that is less than 0 or greater than 100.
 
 ### INPUT ###
 **Passage**:

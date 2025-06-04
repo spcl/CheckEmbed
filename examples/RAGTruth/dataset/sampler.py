@@ -9,10 +9,10 @@
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, Tuple
 
 import openai
 from openai import OpenAI
-from typing import List, Tuple
 from vllm import LLM, SamplingParams
 
 client = OpenAI(

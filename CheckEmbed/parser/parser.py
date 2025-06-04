@@ -7,8 +7,10 @@
 # main author: Lorenzo Paleari
 
 from abc import ABC, abstractmethod
+from typing import Any, List, Union
 
-from typing import Any, List
+from PIL.Image import Image
+
 
 class Parser(ABC):
     """
@@ -53,7 +55,7 @@ class Parser(ABC):
         """
         pass
     
-    def answer_parser(self, responses: List[List[str]], custom_inputs: Any = None) -> List[List[str]]:
+    def answer_parser(self, responses: List[List[Union[str, Image]]], custom_inputs: Any = None) -> List[List[Union[str, Image]]]:
         """
         Parse the responses from the model.
 
@@ -70,10 +72,10 @@ class Parser(ABC):
         ]
 
         :param responses: The responses from the model.
-        :type responses: List[List[str]]
+        :type responses: List[List[Union[str, Image]]]
         :param custom_inputs: The custom inputs to the parser. Defaults to None.
         :type custom_inputs: Any
         :return: The parsed responses.
-        :rtype: List[List[str]]
+        :rtype: List[List[Union[str, Image]]]
         """
         return responses

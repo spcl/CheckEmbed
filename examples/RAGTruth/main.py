@@ -25,15 +25,12 @@ prompt_template = PromptTemplate(
         template="""
 ### INSTRUCTION ###
 
-You are an expert higly skilled in Summarization, Question Answering and in Coverting Data to Text. You will be given an answer to some kind of task, you will also given the original request made by the task. Your task is to evaluate the answer based on the original request, is the answer correct? Or is it factually incorrect and hallucinated?. You will give a score from 0 to 100, where 0 means the answer is completely hallucinated and 100 means the answer is completely correct. Use the full range of scores, 0, 1, 2, ... 10, 20, ... 90, 100.
+You are an expert highly skilled in Summarization, Question Answering and in Converting Data to Text. You will be given an answer to some kind of task, you will also given the original request made by the task. Your task is to evaluate the answer based on the original request, is the answer correct? Or is it factually incorrect and hallucinated?. You will give a score from 0 to 100, where 0 means the answer is completely hallucinated and 100 means the answer is completely correct. Use the full range of scores, 0, 1, 2, ... 10, 20, ... 90, 100.
 
 ### OUTPUT ###
 
 The output should be a single number, which is the score from 0 to 100.
-You CANNOT output any other text.
-You CANNOT output a decimal number.
-You MUST output an integer number.
-You MUST NOT output a number that is less than 0 or greater than 100.
+You CANNOT output any other text. You CANNOT output a decimal number. You MUST output an integer number. You MUST NOT output a number that is less than 0 or greater than 100.
 
 ### ANSWER ###
 {aaa}

@@ -11,12 +11,14 @@ import json
 import logging
 
 from enum import Enum
-from typing import List
+from typing import List, Union
 from timeit import default_timer as timer
 from tqdm import tqdm
+from PIL import Image
 
 from CheckEmbed.language_models import AbstractLanguageModel
 from CheckEmbed.embedding_models import AbstractEmbeddingModel
+from CheckEmbed.vision_models import AbstractVisionModel
 from CheckEmbed.operations import BertScoreOperation
 from CheckEmbed.operations import CheckEmbedOperation
 from CheckEmbed.operations import SelfCheckGPT_Operation, SelfCheckGPT_NLI_Operation
@@ -54,7 +56,7 @@ class Scheduler:
             budget: int = 10,
             parser: Parser = None, 
             embedder: Embedder = Embedder(), 
-            lm: List[AbstractLanguageModel] = None, 
+            lm: List[Union[AbstractLanguageModel, AbstractVisionModel]] = None,
             embedding_lm: List[AbstractEmbeddingModel] = None,
             operations: List[Operation] = [],
             bertScoreOperation: BertScoreOperation = None,
@@ -76,8 +78,8 @@ class Scheduler:
         :type parser: Parser
         :param embedder: An instance of the Embedder class required for the embedding generation. Defaults to the abstract Embedder.
         :type embedder: Embedder
-        :param lm: A list of AbstractLanguageModel instances representing the language models used for sampling. Defaults to None.
-        :type lm: List[AbstractLanguageModel]
+        :param lm: A list of AbstractLanguageModel or AbstractVisionModel instances representing the models used for sampling. Defaults to None.
+        :type lm: List[Union[AbstractLanguageModel, AbstractVisionModel]]
         :param embedding_lm: A list of AbstractEmbeddingModel instances representing the embedding models used for the embedding generation. Defaults to None.
         :type embedding_lm: List[AbstractEmbeddingModel]
         :param operations: A list of Operation instances representing additional operations to be executed. Defaults to an empty list.
@@ -127,20 +129,22 @@ class Scheduler:
 
         return True
 
-    def _samples_generation(self, num_sample: int, lm_names: List[str], device: str, time_performance: bool) -> bool:
+    def _samples_generation(self, num_samples: int, lm_names: List[str], vision_model: bool, device: str, time_performance: bool) -> bool:
         """
-        Generate samples for the given prompts using the language models and save them to a json file.
-        The number of sample generated for each prompt is given by num_sample.
+        Generate samples for the given prompts using the models and save them to a json file.
+        The number of sample generated for each prompt is given by num_samples.
 
-        :param num_sample: The number of samples to generate for each prompt.
-        :type num_sample: int
-        :param lm_names: The names of the language models to be used for sampling.
+        :param num_samples: The number of samples to generate for each prompt.
+        :type num_samples: int
+        :param lm_names: The names of the models to be used for sampling.
         :type lm_names: List[str]
+        :param vision_model: A flag indicating whether the models are vision models.
+        :type vision_model: bool
         :param device: The Torch device to use for the operations.
         :type device: str
         :param time_performance: A flag indicating whether to measure the runtime of the operation.
         :type time_performance: bool
-        :return: False if the language models are not available or the prompts are missing, True otherwise.
+        :return: False if the models are not available or the prompts are missing, True otherwise.
         :rtype: bool
         """
 
@@ -166,7 +170,8 @@ class Scheduler:
 
         # Sampling
         performance_times = []
-        for index, lm_name in (pbar := tqdm(enumerate(lm_names), desc="Language Models", leave=True, total=len(lm_names))):
+        desc = "Language Models" if not vision_model else "Vision Models"
+        for index, lm_name in (pbar := tqdm(enumerate(lm_names), desc=desc, leave=True, total=len(lm_names))):
             pbar.set_postfix_str(f"{lm_name}")
             logging.info(f"Running {lm_name}")
 
@@ -177,13 +182,16 @@ class Scheduler:
             responses = []
             try:
                 for p in tqdm(prompts, desc="Prompts", leave=False):
-                    local_response = self.lm[index].get_response_texts(
-                                    self.lm[index].query(p, num_sample)
-                                )
+                    if vision_model:
+                        local_response = self.lm[index].generate_image([p]*num_samples)
+                    else:
+                        local_response = self.lm[index].get_response_texts(
+                                        self.lm[index].query(p, num_samples)
+                                    )
 
-                    logging.debug("Responses for the prompt are: ")
-                    for r in local_response:
-                        logging.debug(r)
+                        logging.debug("Responses for the prompt are: ")
+                        for r in local_response:
+                            logging.debug(r)
 
                     responses.append(local_response)
             except Exception as e:
@@ -201,9 +209,14 @@ class Scheduler:
 
             # Save results to json files
             logging.info("Saving results...")
-            with open(os.path.join(self.workdir, f"{lm_name}_samples.json"), "w") as f:
-                responses_json = [{"prompt_index": i, "samples": samples} for i, samples in enumerate(responses)]
-                json.dump({"data": responses_json}, f, indent=4)
+            if vision_model:
+                for i, samples in enumerate(responses):
+                    for j, sample in enumerate(samples):
+                        sample.save(os.path.join(self.workdir, "images", f"{lm_name}_image_{i}_{j}.png"))
+            else:
+                with open(os.path.join(self.workdir, f"{lm_name}_samples.json"), "w") as f:
+                    responses_json = [{"prompt_index": i, "samples": samples} for i, samples in enumerate(responses)]
+                    json.dump({"data": responses_json}, f, indent=4)
                 
             logging.info(f"Finished {lm_name}.")
             self.budget -= self.lm[index].cost
@@ -225,7 +238,7 @@ class Scheduler:
             with open(os.path.join(self.workdir, "runtimes", "performance_log.log"), "a") as f:
                 f.write(f"\n\tTotal time: {sum(performance_times)} seconds\n")
                 f.write(f"\tNumber of prompts per LM: {len(prompts)}\n")
-                f.write(f"\tNumber of samples per prompt: {num_sample}\n")
+                f.write(f"\tNumber of samples per prompt: {num_samples}\n")
         
         return True
 
@@ -234,18 +247,24 @@ class Scheduler:
             lm_names: List[str],
             embedding_lm_names: List[str],
             ground_truth: bool,
+            vision_model: bool,
+            num_samples: int,
             device: str,
             time_performance: bool
         ) -> bool:
         """
         Generate embeddings for the given samples using the embedding models and save them to a json file.
 
-        :param lm_names: The names of the language models used for sampling.
+        :param lm_names: The names of the models used for sampling.
         :type lm_names: List[str]
         :param embedding_lm_names: The names of the embedding models used for the embedding.
         :type embedding_lm_names: List[str]
         :param ground_truth: A flag indicating whether to generate embeddings for the ground truth.
         :type ground_truth: bool
+        :param vision_model: A flag indicating whether the models are vision models.
+        :type vision_model: bool
+        :param num_samples: The number of samples.
+        :type num_samples: int
         :param device: The Torch device to use for the operations.
         :type device: str
         :param time_performance: A flag indicating whether to measure the runtime of the operation.
@@ -288,17 +307,34 @@ class Scheduler:
 
             embedding_times = []
             logging.info("Generating embeddings...")
-            for index, lm_name in (pbar2 := tqdm(enumerate(lm_names), desc="Language Models", leave=True, total=len(lm_names))):
+            desc = "Language Models" if not vision_model else "Vision Models"
+            for index, lm_name in (pbar2 := tqdm(enumerate(lm_names), desc=desc, leave=True, total=len(lm_names))):
                 pbar2.set_postfix_str(f"{lm_names}")
                 logging.info(f"Running {lm_names}...")
                 start = timer() if time_performance else None
 
-                if not os.path.exists(os.path.join(self.workdir, f"{lm_name}_samples.json")):
-                    return False
+                if vision_model:
+                    if not os.path.exists(os.path.join(self.workdir, "images", f"{lm_name}_image_0_0.png")):
+                        return False
+                    samples = []
+                    try:
+                        num_files = len(os.listdir(os.path.join(self.workdir, "images")))
+                        for i in range(int(num_files / num_samples)):
+                            sample = []
+                            for j in range(num_samples):
+                                sample.append(Image.open(os.path.join(self.workdir, "images", f"{lm_name}_image_{i}_{j}.png")))
+                            samples.append(sample)
+                    except Exception as e:
+                        logging.error(f"Error while loading samples for {lm_name}: {e}")
+                        print(f"Error while loading samples for {lm_name}: {e}")
+                        continue
+                else:
+                    if not os.path.exists(os.path.join(self.workdir, f"{lm_name}_samples.json")):
+                        return False
 
-                with open(os.path.join(self.workdir, f"{lm_name}_samples.json"), "r") as f:
-                    samples = json.load(f)["data"]
-                samples = [s["samples"] for s in samples]
+                    with open(os.path.join(self.workdir, f"{lm_name}_samples.json"), "r") as f:
+                        samples = json.load(f)["data"]
+                    samples = [s["samples"] for s in samples]
 
                 embeddings = []
                 for sample in tqdm(samples, desc="Prompts", leave=False):
@@ -457,6 +493,7 @@ class Scheduler:
             bertScore: bool = False,
             selfCheckGPT: bool = False,
             llm_as_a_judge: bool = False,
+            vision: bool = False,
             checkEmbed: bool = True,
             ground_truth: bool = False,
             spacy_separator: bool = True,
@@ -483,6 +520,8 @@ class Scheduler:
         :type selfCheckGPT: bool
         :param llm_as_a_judge: A flag indicating whether to execute the LLM as a judge operation. Defaults to False.
         :type llm_as_a_judge: bool
+        :param vision: A flag indicating whether to execute the vision operation. Defaults to False.
+        :type vision: bool
         :param checkEmbed: A flag indicating whether to execute the CheckEmbed operation. Defaults to True.
         :type checkEmbed: bool
         :param ground_truth: A flag indicating whether ground truth is available. Defaults to False.
@@ -512,10 +551,17 @@ class Scheduler:
         # Create the directory structure if necessary
         if defaultDirectories:
             os.makedirs(os.path.join(self.workdir, "embeddings"), exist_ok=True)
-            os.makedirs(os.path.join(self.workdir, "CheckEmbed"), exist_ok=True)
-            os.makedirs(os.path.join(self.workdir, "BertScore"), exist_ok=True)
-            os.makedirs(os.path.join(self.workdir, "SelfCheckGPT"), exist_ok=True)
-            os.makedirs(os.path.join(self.workdir, "Judge"), exist_ok=True)
+            if checkEmbed:
+                os.makedirs(os.path.join(self.workdir, "CheckEmbed"), exist_ok=True)
+            if bertScore:
+                os.makedirs(os.path.join(self.workdir, "BertScore"), exist_ok=True)
+            if selfCheckGPT:
+                os.makedirs(os.path.join(self.workdir, "SelfCheckGPT"), exist_ok=True)
+            if llm_as_a_judge:
+                os.makedirs(os.path.join(self.workdir, "Judge"), exist_ok=True)
+            if vision:
+                os.makedirs(os.path.join(self.workdir, "images"), exist_ok=True)
+                os.makedirs(os.path.join(self.workdir, "vision"), exist_ok=True)
 
         if time_performance:
             if not os.path.exists(os.path.join(self.workdir, "runtimes")):
@@ -557,7 +603,7 @@ class Scheduler:
         # SAMPLES GENERATION
         if startingPoint.value <= StartingPoint.SAMPLES.value:
             print("\n\nStarting samples generation...")
-            executed = self._samples_generation(num_samples, lm_names, device, time_performance)
+            executed = self._samples_generation(num_samples, lm_names, vision, device, time_performance)
             if not executed:
                 print("For samples generation a parser or a language model with prompts.json file is required")
                 return
@@ -567,7 +613,7 @@ class Scheduler:
         # EMBEDDINGS GENERATION
         if startingPoint.value <= StartingPoint.EMBEDDINGS.value:
             print("\n\nEmbeddings generation started...")
-            executed = self._embeddings_generation(lm_names, embedding_lm_names, ground_truth, device, time_performance)
+            executed = self._embeddings_generation(lm_names, embedding_lm_names, ground_truth, vision, num_samples, device, time_performance)
             if not executed:
                 print("For the embeddings generation requires an embedder, an embedding model, a lists of LLMs and embedding model names.")
                 return
