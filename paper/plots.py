@@ -905,6 +905,7 @@ def load_all_single_values(file_path):
     
     return frob_norm_cosine_sim, std_dev_cosine_sim, frob_norm_pearson_corr, std_dev_pearson_corr
 
+# written by Eric Schreiber
 def plot_vision_results(correct_images, path):
     frobnorms = []
     std_dev_cosine_sims = []
@@ -962,14 +963,18 @@ def plot_vision_results(correct_images, path):
     colors = [(0, 0, 142), (142, 142, 3)]
     colors = [tuple(c/255 for c in color) for color in colors]
     # Plot with Seaborn
-    plt.figure(figsize=(8,5))
-    sns.violinplot(data=combined_df, x="level", y="value", hue="type", inner="quartile", palette=colors,
+    plt.figure(figsize=(4.75,4))
+    g = sns.violinplot(data=combined_df, x="level", y="value", hue="type", inner="quartile", palette=colors,
                     alpha=0.4, split=True, gap=0.0)
     # make fontsize 14
     plt.xticks(fontsize=13)
     plt.yticks(fontsize=13)
 
-    plt.ylabel("Score", fontsize=15)
+    plt.ylabel("Normalized Distribution", fontsize=15)
+    # remove y axis ticks and ticklabels
+    g.tick_params(left=False, bottom=True)
+    plt.yticks([-4,-3,-2,-1,0,1,2,3], "")
+
     plt.xlabel("Number of Items in the Image", fontsize=15)
     plt.legend(loc='lower left')
     plt.tight_layout()
