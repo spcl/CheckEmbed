@@ -35,9 +35,11 @@ dependencies = [
   "numpy>=1.24.3,<2.0.0",
   "openai>=1.0.0,<2.0.0",
   "packaging>=24.1,<25.0",
+  "pandas>2.0.0,<3.0.0",
   "pillow>=11.2.1",
   "pydantic>=2.8.2",
   "scikit-learn>=1.5.1,<2.0.0",
+  "scipy>1.15.0,<2.0.0",
   "seaborn>=0.13.2,<0.14.0",
   "selfcheckgpt>=0.1.7,<1.0.0",
   "sentencepiece>=0.2.0,<0.3.0",
@@ -46,10 +48,7 @@ dependencies = [
   "transformers>=4.51.3,<5.0.0",
   "transformers[torch]",
   "wheel>=0.43.0,<1.0.0",
-  "pandas",
-  "scipy",
-  "sklearn",
-  "vllm"
+  "vllm>=0.8.2,<1.0.0"
 ]
 
 [project.optional-dependencies]
