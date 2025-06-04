@@ -973,7 +973,52 @@ def plot_vision_results(correct_images, path):
     plt.xlabel("Number of Items in the Image", fontsize=15)
     plt.legend(loc='lower left')
     plt.tight_layout()
-    plt.savefig("./frobnorms_correct_images_normalized.pdf")
+    plt.savefig("frobnorms_correct_images_normalized.pdf")
+
+    # plot additionally just the Frobenius norm for the tennis balls experiment
+    correct_images = [
+        [10, 10, 9, 8, 1 ],
+        [10, 10, 8, 7, 5],
+        [10, 8, 10, 8, 4], 
+        [9, 7, 6, 7, 6],
+        [10, 10, 7, 6, 6 ],
+        [10, 9, 8, 6, 5],
+        [10, 9, 6, 5, 3],
+        [10, 6, 4, 9, 2]
+    ]
+    tennis_balls = correct_images[1]
+    frobnorms_balls = frobnorms[1]
+    std_dev_cosine_sim_balls = std_dev_cosine_sims[1]
+
+    colors_dots = [(142, 142, 3),(0, 0, 142)]
+    colors_lines = [(203,203,165), (160, 160, 199)]
+    colors_desc = [(183, 183, 115), (130, 130, 220)]
+    colors_dots = [(c[0]/255, c[1]/255, c[2]/255) for c in colors_dots]
+    colors_lines = [tuple(c/255 for c in color) for color in colors_lines]
+    colors_desc = [tuple(c/255 for c in color) for color in colors_desc]
+
+    fig, ax1 = plt.subplots(figsize=(7,4))
+    ax2 = ax1.twinx()
+    ax1.plot(range(len(tennis_balls)), tennis_balls, marker='o', label="Number of Correct Images", color=colors_lines[0], markerfacecolor=colors_desc[0],
+             markeredgecolor=colors_desc[0])
+    ax1.set_ylabel("Number of Correct Images", fontsize=14)
+    ax1.tick_params(axis='y', labelcolor=colors_desc[0], labelsize=12)
+
+    ax2.plot(range(len(frobnorms[1])), frobnorms[1], marker='o', label="Frobenius norm", color=colors_lines[1], markerfacecolor=colors_desc[1],
+                markeredgecolor=colors_desc[1])
+    ax2.set_ylabel("Frobenius Norm", fontsize=14)
+    ax2.tick_params(axis='y', labelcolor=colors_desc[1], labelsize=12)
+
+    ax1.set_xticks(range(0, len(tennis_balls)))
+    ax1.set_xticklabels([f"{j} Items" for j in range(len(tennis_balls))], fontsize=12)
+    ax1.set_xlabel("Number of Tennis Balls in Image", fontsize=14)
+    ax1.set_ylim(0, 12)
+    ax1.set_xlim(-0.5, 4.5)
+    ax2.set_ylim(0.965, 1)
+    ax2.set_xlim(-0.5, 4.5)
+    plt.tight_layout()
+    plt.savefig("tennis_balls_frobnorm.pdf")
+
 
 plot_description_combined()
 
