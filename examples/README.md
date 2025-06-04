@@ -4,10 +4,10 @@ This directory contains scripts for running various examples using the CheckEmbe
 
 Please refer to the individual example directories for more information on the specific example, specifically the `main.py` file, which is almost ready to be executed.
 
-
 ## General Information
 
 In each `main.py` file, the following parameters need to be set up for the desired environment:
+
 - Check that the `config_path` variable is set up correctly.
 - Choose the language model(s) to evaluate.
 - Choose the embedding model(s).
@@ -19,10 +19,10 @@ In each `main.py` file, the following parameters need to be set up for the desir
 - If you want to use the `Alibaba-NLP/gte-Qwen1.5-7B-instruct` embedding model, please add your Huggingface access token to respective initialisation call.
 
 Once everything is set up, change into the desired example folder and execute:
+
 ```
 python3 main.py
 ```
-
 
 ## Scheduler Setup
 
@@ -41,6 +41,8 @@ scheduler = Scheduler(
     # Update to include more or fewer LLMs / embedding models.
     lm = [gpt4_o, gpt4, gpt3],
     embedding_lm = [embedd_large, sfrEmbeddingMistral, e5mistral7b, gteQwen157bInstruct],
+    llm_as_a_judge_Operation = llm_as_a_judge_Operation,
+    llm_as_a_judge_models = [gpt4_o_mini, gpt4_o, llama70, llama8],
 
     # Operations to be executed during the evaluation stage.
     operations = [operation1, operation2, ...],
@@ -59,6 +61,7 @@ scheduler.run(
     bertScore = True,
     selfCheckGPT = True,
     checkEmbed = True,
+    llm_as_a_judge = True,
 
     # Settings for the pipeline.
     ground_truth = False,

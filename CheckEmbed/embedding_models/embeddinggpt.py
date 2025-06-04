@@ -49,10 +49,10 @@ class EmbeddingGPT(AbstractEmbeddingModel):
         self.dimension: int = self.config["dimension"]
         # The account organization is the organization that is used for chatgpt.
         self.organization: str = self.config["organization"]
-        if self.organization == "":
+        if self.config["organization"] == "":
             self.logger.warning("OPENAI_ORGANIZATION is not set")
         self.api_key: str = os.getenv("OPENAI_API_KEY", self.config["api_key"])
-        if self.api_key == "":
+        if os.getenv("OPENAI_API_KEY", self.config["api_key"]) == "":
             self.logger.warning("OPENAI_API_KEY is not set")
         # Initialize the OpenAI Client
         self.client = OpenAI(api_key=self.api_key, organization=self.organization)

@@ -17,8 +17,11 @@ The prompt templates for the subtasks can be found in `different/prompt_scheme.t
 
 The samples have been generated with a temperature of 1.0. The temperature can be adjusted in your `config.json`.
 We estimate a compute time of 90 minutes with an NVIDIA Tesla V100-PCIE-32GB for each subtask.
-   
+
 The total estimated costs are $1.55 for each subtask:
+
 - GPT4-o: $0.5
 - GPT4-turbo: $1
 - GPT3.5: $0.05
+
+Running LLM-as-a-Judge for all subtasks will result in an additional cost of no more than $1.

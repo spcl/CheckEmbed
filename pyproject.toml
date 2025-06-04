@@ -37,8 +37,13 @@ dependencies = [
   "sentencepiece>=0.2.0,<0.3.0",
   "tiktoken>=0.7.0,<1.0.0",
   "torch==2.6.0",
-  "transformers>=4.41.0,<5.0.0",
+  "transformers>=4.44.2,<5.0.0",
+  "transformers[torch]",
   "wheel>=0.43.0,<1.0.0",
+  "langchain>=0.2.11",
+  "langchain_ollama",
+  "pydantic>=2.8.2",
+  "vllm"
 ]
 
 [project.optional-dependencies]

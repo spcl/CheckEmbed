@@ -21,6 +21,7 @@ from CheckEmbed.operations import BertScoreOperation
 from CheckEmbed.operations import CheckEmbedOperation
 from CheckEmbed.operations import SelfCheckGPT_Operation, SelfCheckGPT_NLI_Operation
 from CheckEmbed.operations import Operation
+from CheckEmbed.operations import LLMAsAJudgeOperation
 from CheckEmbed.parser import Parser
 from CheckEmbed.embedder import Embedder
 
@@ -59,6 +60,8 @@ class Scheduler:
             bertScoreOperation: BertScoreOperation = None,
             selfCheckGPTOperation: List[SelfCheckGPT_Operation] = [],
             checkEmbedOperation: CheckEmbedOperation = None,
+            llm_as_a_judge_Operation: LLMAsAJudgeOperation = None,
+            llm_as_a_judge_models: List[AbstractLanguageModel] = [],
         ) -> None:
         """
         Initializes the Scheduler instance with the given parameters.
@@ -85,6 +88,10 @@ class Scheduler:
         :type selfCheckGPTOperation: List[SelfCheckGPT_Operation]
         :param checkEmbedOperation: An instance of a custom CheckEmbedOperation class for CheckEmbed computation. Defaults to None. If None, the default CheckEmbedOperation will be used.
         :type checkEmbedOperation: CheckEmbedOperation
+        :param llm_as_a_judge_Operation: An instance of a custom LLMAsAJudgeOperation class for the LLM as a judge computation. Defaults to None.
+        :type llm_as_a_judge_Operation: LLMAsAJudgeOperation
+        :param llm_as_a_judge_models: A list of AbstractLanguageModel instances representing the language models used for the LLM as a judge operation. Defaults to an empty list.
+        :type llm_as_a_judge_models: List[AbstractLanguageModel]
         """
 
         self.workdir = workdir
@@ -98,6 +105,9 @@ class Scheduler:
         self.bertScoreOperation = BertScoreOperation(os.path.join(workdir, "BertScore"), workdir) if bertScoreOperation is None else bertScoreOperation
         self.selfCheckGPTOperation = [SelfCheckGPT_NLI_Operation(os.path.join(workdir, "SelfCheckGPT"), workdir)] if len(selfCheckGPTOperation) == 0 else selfCheckGPTOperation
         self.checkEmbedOperation = CheckEmbedOperation(os.path.join(workdir, "CheckEmbed"), os.path.join(workdir, "embeddings")) if checkEmbedOperation is None else checkEmbedOperation
+        self.llm_as_a_judge_Operation = llm_as_a_judge_Operation
+        self.llm_as_a_judge_models = llm_as_a_judge_models
+
 
     def _prompt_generation(self) -> bool:
         """
@@ -446,6 +456,7 @@ class Scheduler:
             defaultDirectories: bool = True,
             bertScore: bool = False,
             selfCheckGPT: bool = False,
+            llm_as_a_judge: bool = False,
             checkEmbed: bool = True,
             ground_truth: bool = False,
             spacy_separator: bool = True,
@@ -470,6 +481,8 @@ class Scheduler:
         :type bertScore: bool
         :param selfCheckGPT: A flag indicating whether to execute the selfCheckGPT operation. Defaults to False.
         :type selfCheckGPT: bool
+        :param llm_as_a_judge: A flag indicating whether to execute the LLM as a judge operation. Defaults to False.
+        :type llm_as_a_judge: bool
         :param checkEmbed: A flag indicating whether to execute the CheckEmbed operation. Defaults to True.
         :type checkEmbed: bool
         :param ground_truth: A flag indicating whether ground truth is available. Defaults to False.
@@ -502,10 +515,7 @@ class Scheduler:
             os.makedirs(os.path.join(self.workdir, "CheckEmbed"), exist_ok=True)
             os.makedirs(os.path.join(self.workdir, "BertScore"), exist_ok=True)
             os.makedirs(os.path.join(self.workdir, "SelfCheckGPT"), exist_ok=True)
-            # Disable until new plotting scripts are available
-            #os.makedirs(os.path.join(self.workdir, "plots", "CheckEmbed"), exist_ok=True)
-            #os.makedirs(os.path.join(self.workdir, "plots", "BertScore"), exist_ok=True)
-            #os.makedirs(os.path.join(self.workdir, "plots", "SelfCheckGPT"), exist_ok=True)
+            os.makedirs(os.path.join(self.workdir, "Judge"), exist_ok=True)
 
         if time_performance:
             if not os.path.exists(os.path.join(self.workdir, "runtimes")):
@@ -578,6 +588,18 @@ class Scheduler:
             print("\n\nStarting CheckEmbed operation...")
             self.checkEmbedOperation.execute(custom_inputs={"ground_truth": ground_truth, "time_performance": time_performance, "rebase_results": rebase_results})  
             print("Done!\n")
+
+        if llm_as_a_judge:
+            if self.llm_as_a_judge_Operation is None:
+                print("For the LLM as a judge operation a LLMAsAJudgeOperation instance is required")
+                return
+            if len(self.llm_as_a_judge_models) == 0:
+                print("For the LLM as a judge operation a list of LLMs is required")
+                return
+            print("\n\nStarting LLM as a judge operation...")
+            for llm_as_a_judge_model in self.llm_as_a_judge_models:
+                self.llm_as_a_judge_Operation.execute(custom_inputs={"model": llm_as_a_judge_model})
+            print("Done!\n")        
 
         print("\n\nStarting other operations...")
         self._operations(ground_truth=ground_truth, time_performance=time_performance)

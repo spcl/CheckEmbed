@@ -12,12 +12,12 @@
 # modifications: Lorenzo Paleari
 
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Union
+
 import backoff
-import os
-from typing import List, Dict, Union
 from openai import OpenAI, OpenAIError
 from openai.types.chat.chat_completion import ChatCompletion
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 
 from CheckEmbed.language_models import AbstractLanguageModel
@@ -32,7 +32,7 @@ class ChatGPT(AbstractLanguageModel):
 
     # modified by Lorenzo Paleari
     def __init__(
-        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False, max_concurrent_requests: int = 10
+        self, config_path: str = "", model_name: str = "chatgpt4", cache: bool = False, max_concurrent_requests: int = 10, temperature: float = None
     ) -> None:
         """
         Initialize the ChatGPT instance with configuration, model details, and caching options.
@@ -45,31 +45,32 @@ class ChatGPT(AbstractLanguageModel):
         :type cache: bool
         :param max_concurrent_requests: The maximum number of concurrent requests. Defaults to 10.
         :type max_concurrent_requests: int
+        :param temperature: The temperature for the model. If not provided, it will be taken from the config.
+        :type temperature: float
         """
         super().__init__(config_path, model_name, cache)
         self.config: Dict = self.config[model_name]
         # The model_id is the id of the model that is used for chatgpt, i.e. gpt-4, gpt-3.5-turbo, etc.
         self.model_id: str = self.config["model_id"]
+        self.name = self.config["name"]
         # The prompt_token_cost and response_token_cost are the costs for 1000 prompt tokens and 1000 response tokens respectively.
         self.prompt_token_cost: float = self.config["prompt_token_cost"]
         self.response_token_cost: float = self.config["response_token_cost"]
         # The temperature of a model is defined as the randomness of the model's output.
-        self.temperature: float = self.config["temperature"]
+        self.temperature: float = temperature if temperature is not None else self.config["temperature"]
         # The maximum number of tokens to generate in the chat completion.
         self.max_tokens: int = self.config["max_tokens"]
         # The stop sequence is a sequence of tokens that the model will stop generating at (it will not generate the stop sequence).
         self.stop: Union[str, List[str]] = self.config["stop"]
         # The account organization is the organization that is used for chatgpt.
         self.organization: str = self.config["organization"]
-        if self.organization == "":
+        if self.config["organization"] == "":
             self.logger.warning("OPENAI_ORGANIZATION is not set")
-        self.api_key: str = os.getenv("OPENAI_API_KEY", self.config["api_key"])
-        if self.api_key == "":
+        self.api_key: str = self.config["api_key"]
+        if self.config["api_key"] == "":
             self.logger.warning("OPENAI_API_KEY is not set")
         # Initialize the OpenAI Client
         self.client = OpenAI(api_key=self.api_key, organization=self.organization)
-
-        self.max_concurrent_requests = max_concurrent_requests
 
         self.max_concurrent_requests = max_concurrent_requests
 
