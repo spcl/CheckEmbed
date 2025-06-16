@@ -43,12 +43,13 @@ Citation
 Any published work which uses this software should include the
 following citation:
 
-----------------------------------------------------------------------
-Maciej Besta, Lorenzo Paleari, Ales Kubicek, Piotr Nyczyk, Robert
-Gerstenberger, Patrick Iff, Tomasz Lehmann, Hubert Niewiadomski,
-Torsten Hoefler: CheckEmbed: Effective Verification of LLM Solutions
-to Open-Ended Tasks. In: arXiv preprint arXiv:2406.02524
-----------------------------------------------------------------------
+------------------------------------------------------------------------
+Maciej Besta, Lorenzo Paleari, Marcin Copik, Robert Gerstenberger, Ales
+Kubicek, Piotr Nyczyk, Patrick Iff, Eric Schreiber, Tanja Srindran,
+Tomasz Lehmann, Hubert Niewiadomski, Torsten Hoefler (2025): CheckEmbed:
+Effective Verification of LLM Solutions to Open-Ended Tasks. In: arXiv
+preprint arXiv:2406.02524
+------------------------------------------------------------------------
 
 
 CheckEmbed uses code from the Graph-of-Thoughts, SelfCheckGPT
