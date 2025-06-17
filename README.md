@@ -78,10 +78,10 @@ Got any questions or feedback? Feel free to reach out and open an issue.
 Using this in your work? Please reference us using the provided citation:
 
 ```bibtex
-@misc{besta2024checkembed,
+@misc{besta2025checkembed,
   title = {{CheckEmbed: Effective Verification of LLM Solutions to Open-Ended Tasks}},
-  author = {Besta, Maciej and Paleari, Lorenzo and Kubicek, Ales and Nyczyk, Piotr and Gerstenberger, Robert and Iff, Patrick and Lehmann, Tomasz and Niewiadomski, Hubert and Hoefler, Torsten},
-  year = 2024,
+  author = {Besta, Maciej and Paleari, Lorenzo and Copik, Marcin and Gerstenberger, Robert and Kubicek, Ales and Nyczyk, Piotr and Iff, Patrick and Schreiber, Eric and Srindran, Tanja and Lehmann, Tomasz and Niewiadomski, Hubert and Hoefler, Torsten},
+  year = 2025,
   month = Jun,
   eprinttype = {arXiv},
   eprint = {2406.02524}
